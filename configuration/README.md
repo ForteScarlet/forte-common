@@ -3,6 +3,8 @@
 提供配置读取功能模块。
 
 
+## 构建流程
+
 ConfigurationManagerBuilder --> 
 ConfigurationManager --`.parse(type, resources)`-->  
 Configuration --`.getConfig(key)`--> 

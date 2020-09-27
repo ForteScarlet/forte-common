@@ -48,7 +48,7 @@ public @interface ConfigBeans {
 
     /**
      * 优先级。当在获取某个依赖的时候，假如在通过类型获取的时候存在多个值，会获取优先级更高级别的依赖并摒弃其他依赖。
-     * 升序排序。默认为最低。
+     * 升序排序。默认为90。
      */
-    int priority() default Integer.MIN_VALUE;
+    int priority() default 90;
 }
