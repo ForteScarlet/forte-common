@@ -13,7 +13,6 @@
 package love.forte.common.ioc.annotation;
 
 import love.forte.common.utils.annotation.AnnotateMapping;
-import love.forte.simbot.core.constant.PriorityConstant;
 
 import java.lang.annotation.*;
 
@@ -49,7 +48,7 @@ public @interface ConfigBeans {
 
     /**
      * 优先级。当在获取某个依赖的时候，假如在通过类型获取的时候存在多个值，会获取优先级更高级别的依赖并摒弃其他依赖。
-     * 升序排序。默认为核心最低。
+     * 升序排序。默认为最低。
      */
-    int priority() default PriorityConstant.CORE_LAST;
+    int priority() default Integer.MIN_VALUE;
 }

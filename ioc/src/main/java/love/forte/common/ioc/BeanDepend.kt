@@ -12,7 +12,6 @@
 
 package love.forte.common.ioc
 
-import love.forte.simbot.core.constant.PriorityConstant
 
 
 /**
@@ -127,7 +126,7 @@ public open class BeanDependBuilder<B> {
     private var asConfig: Boolean = false
     private var instanceSupplier: InstanceSupplier<B>? = null
     // private var instanceInjector: InstanceInjector<B> = InstanceInjector { b, _ -> b }
-    private var priority: Int = PriorityConstant.TENTH
+    private var priority: Int = 90
 
     fun type(type: Class<out B>): BeanDependBuilder<B> {
         this.type = type
