@@ -198,9 +198,7 @@ public class AnnotationUtil {
                     }
                 }
             }
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
+        } catch (NoSuchMethodException ignored1) { }
 
         Annotation[] annotations = from.getAnnotations();
 
@@ -387,7 +385,7 @@ public class AnnotationUtil {
                 annotateMapping = classAnnotateMapping;
             }
             if (annotateMapping != null) {
-                if (annotateMapping.type().equals(toType)) {
+                if (annotateMapping.value().equals(toType)) {
                     String name = annotateMapping.name();
                     if (name.length() == 0) {
                         name = method.getName();

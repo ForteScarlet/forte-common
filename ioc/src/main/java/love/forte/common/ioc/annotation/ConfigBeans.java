@@ -26,7 +26,7 @@ import java.lang.annotation.*;
 @Target({ElementType.TYPE, ElementType.METHOD}) //接口、类、枚举、注解、方法
 @Documented
 @Beans(init = true)
-@AnnotateMapping(type = Beans.class)
+@AnnotateMapping(value = Beans.class)
 public @interface ConfigBeans {
 
     /** 依赖对象的名称，如果没有则以类名取代 */

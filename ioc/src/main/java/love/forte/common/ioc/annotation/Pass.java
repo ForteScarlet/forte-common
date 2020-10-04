@@ -37,4 +37,9 @@ public @interface Pass {
      */
     boolean postInit() default false;
 
+    /**
+     * 优先级。
+     */
+    int priority() default Integer.MIN_VALUE;
+
 }

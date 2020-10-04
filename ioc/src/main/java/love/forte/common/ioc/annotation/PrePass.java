@@ -12,6 +12,8 @@
 
 package love.forte.common.ioc.annotation;
 
+import love.forte.common.utils.annotation.AnnotateMapping;
+
 import java.lang.annotation.*;
 
 /**
@@ -24,5 +26,11 @@ import java.lang.annotation.*;
 @Target({ElementType.METHOD}) //接口、类、枚举、注解、方法
 @Documented
 @Pass(preInit = true)
+@AnnotateMapping(Pass.class)
 public @interface PrePass {
+
+    /**
+     * 优先级。
+     */
+    int priority() default Integer.MIN_VALUE;
 }

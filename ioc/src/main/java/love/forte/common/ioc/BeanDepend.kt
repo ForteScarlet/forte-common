@@ -70,8 +70,8 @@ public interface BeanDepend<B> : Comparable<BeanDepend<*>> {
 
     @JvmDefault
     override fun compareTo(other: BeanDepend<*>): Int = priority.compareTo(other.priority)
-
 }
+
 
 
 /**

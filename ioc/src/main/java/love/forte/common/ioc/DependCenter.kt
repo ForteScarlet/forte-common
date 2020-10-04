@@ -56,6 +56,18 @@ constructor(
     private val configuration: Configuration? = null // auto config able.
 ) : BeanDependRegistry, DependBeanFactory, Closeable {
 
+
+
+    /**
+     * 需要被初始化的beans列表
+     */
+    private var needInitialized: Queue<BeanDepend<*>> = PriorityQueue { b1, b2 -> b1.priority.compareTo(b2.priority) }
+
+
+    private var preInitPasses: Queue<DependPass> = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
+
+    private var postInitPasses: Queue<DependPass> = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
+
     @Volatile
     private var initialized: Boolean = false
 
@@ -67,18 +79,22 @@ constructor(
     public fun init() {
         if (!initialized) {
             synchronized(needInitialized) {
-                needInitialized.sortedBy { it.priority }
+                // needInitialized.sortedBy { it.priority }
+
+                while(preInitPasses.isNotEmpty()) {
+                    preInitPasses.poll()(this)
+                }
 
                 while (needInitialized.isNotEmpty()) {
-                    needInitialized.poll().let { it.instanceSupplier(this) }
+                    needInitialized.poll().instanceSupplier(this)
                 }
+
+                while(postInitPasses.isNotEmpty()) {
+                    postInitPasses.poll()(this)
+                }
+
             }
 
-            // needInitialized.forEach {
-            //     if(!it.initialized) {
-            //         it.instanceSupplier(this)
-            //     }
-            // }
             initialized = true
         }
     }
@@ -98,11 +114,6 @@ constructor(
             }
         }
     }
-
-    /**
-     * 需要被初始化的beans列表
-     */
-    private val needInitialized: Queue<BeanDepend<*>> = LinkedList()
 
     /**
      * 类型最终值。获取一个类型，先优先尝试使用此处，获取不到则去 [typeResourceWarehouse] 中寻找并固定于此处。
@@ -559,7 +570,9 @@ constructor(
         nameResourceWarehouse.merge(name, beanDepend, mergeDuplicate(name))
         // 需要init但是还没有init过
         if (beanDepend.needInit && !initialized) {
-            needInitialized.add(beanDepend)
+            synchronized(needInitialized) {
+                needInitialized.add(beanDepend)
+            }
         } else {
             //init 过了, 直接获取一次
             beanDepend.instanceSupplier(this)

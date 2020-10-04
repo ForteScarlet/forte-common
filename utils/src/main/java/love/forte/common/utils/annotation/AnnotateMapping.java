@@ -30,9 +30,9 @@ import java.lang.annotation.*;
 public @interface AnnotateMapping {
 
     /**
-     * 映射的父类注解
+     * 映射的父类注解。
      */
-    Class<? extends Annotation> type();
+    Class<? extends Annotation> value();
 
     /**
      * 映射的父类注解的名称

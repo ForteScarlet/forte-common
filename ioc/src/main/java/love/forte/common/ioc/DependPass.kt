@@ -10,17 +10,38 @@
  * QQ     1149159218
  */
 
-package love.forte.common.ioc.annotation
+package love.forte.common.ioc
 
 import love.forte.common.ioc.DependBeanFactory
+import java.util.*
 
 
 /**
- * 被标注了 [Pass] 注解的方法。
+ * 被标注了 [love.forte.common.ioc.annotation.Pass] 注解的方法。
  */
-public fun interface DependPass {
+public interface DependPass {
     /**
      * 执行此Pass。
      */
     operator fun invoke(dependBeanFactory: DependBeanFactory)
+
+    /**
+     * 排序
+     */
+    @JvmDefault
+    val priority: Int get() = Int.MIN_VALUE
+
 }
+
+
+
+// public class DependPassImpl : DependPass {
+//
+// }
+
+
+
+
+
+
+
