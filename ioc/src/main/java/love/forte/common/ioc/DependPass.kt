@@ -73,7 +73,7 @@ public class MethodDependPass(
         }
 
         // invoke.
-        method.invoke(instance, *params)
+        method(instance, *params)
     }
 
 }
