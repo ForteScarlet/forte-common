@@ -19,11 +19,13 @@ import love.forte.common.configuration.annotation.AsConfig
 import love.forte.common.ioc.annotation.Beans
 import love.forte.common.ioc.annotation.Constr
 import love.forte.common.ioc.annotation.Depend
+import love.forte.common.ioc.annotation.Pass
 import love.forte.common.ioc.exception.*
 import love.forte.common.utils.FieldUtil
 import love.forte.common.utils.annotation.AnnotationUtil
 import love.forte.common.utils.convert.ConverterManager
 import java.io.Closeable
+import java.lang.IllegalStateException
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
@@ -31,6 +33,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiFunction
 import kotlin.reflect.KMutableProperty
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.javaSetter
 import kotlin.reflect.jvm.kotlinProperty
 
@@ -44,7 +47,7 @@ import kotlin.reflect.jvm.kotlinProperty
  *
  * @param singletonMap 保存单例的map。在put的时候会有同步锁，所以应该不需要线程安全的Map.
  * @param nameResourceWarehouse 保存依赖的map。以name为key, 对应着唯一的值，也是其他sourceWarehouse中最终指向的地方。
- * @param parent 依赖中心的父类依赖。
+ * @param parent 依赖中心的父类依赖。可以通过 [mergeParent] 来指定一个新的 parent.
  */
 public class DependCenter
 @JvmOverloads
@@ -57,20 +60,20 @@ constructor(
 ) : BeanDependRegistry, DependBeanFactory, Closeable {
 
 
-
     /**
      * 需要被初始化的beans列表
      */
-    private var needInitialized: Queue<BeanDepend<*>> = PriorityQueue { b1, b2 -> b1.priority.compareTo(b2.priority) }
+    private val needInitialized: Queue<BeanDepend<*>> = PriorityQueue { b1, b2 -> b1.priority.compareTo(b2.priority) }
 
 
-    private var preInitPasses: Queue<DependPass> = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
+    private val preInitPasses: Queue<DependPass> = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
 
-    private var postInitPasses: Queue<DependPass> = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
+    private val postInitPasses: Queue<DependPass> = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
 
     @Volatile
     private var initialized: Boolean = false
 
+    private val initializedLock = Any()
 
     /**
      * do init.
@@ -78,10 +81,10 @@ constructor(
     @Synchronized
     public fun init() {
         if (!initialized) {
-            synchronized(needInitialized) {
+            synchronized(initializedLock) {
                 // needInitialized.sortedBy { it.priority }
 
-                while(preInitPasses.isNotEmpty()) {
+                while (preInitPasses.isNotEmpty()) {
                     preInitPasses.poll()(this)
                 }
 
@@ -89,13 +92,14 @@ constructor(
                     needInitialized.poll().instanceSupplier(this)
                 }
 
-                while(postInitPasses.isNotEmpty()) {
+                while (postInitPasses.isNotEmpty()) {
                     postInitPasses.poll()(this)
                 }
 
             }
 
             initialized = true
+
         }
     }
 
@@ -147,6 +151,8 @@ constructor(
     /**
      * 解析注解并注入依赖。 优先使用类上注解, 如果没有则使用提供的额外注解。 如果最终都没有, 抛出异常。
      *
+     * 会同时解析类中存在的 [love.forte.common.ioc.annotation.Pass]方法。
+     *
      * @param defaultAnnotation 如果class有的class不存在bean, 可以提供一个默认的注解实例来代替为这个class的注解。
      * @param type 要注入的类型。
      *
@@ -159,7 +165,7 @@ constructor(
         }
 
         // 如果是BeanDependRegistrar的实现类, 则会直接执行.
-        if(type.isAssignableFrom(BeanDependRegistrar::class.java)) {
+        if (type.isAssignableFrom(BeanDependRegistrar::class.java)) {
             val registrar: BeanDependRegistrar = type.newInstance() as BeanDependRegistrar
             registrar.registerBeanDepend(AnnotationHelper, this)
             return
@@ -223,12 +229,12 @@ constructor(
         } else realInstanceSupplier
 
         // 如果可以作为Config注入, 追加配置注入
-        val instanceSupplierWithConfig: InstanceSupplier<T> = if(configuration !=null && asConfig) {
+        val instanceSupplierWithConfig: InstanceSupplier<T> = if (configuration != null && asConfig) {
             InstanceSupplier { fac ->
                 val instance: T = instanceSupplier(fac)
                 ConfigurationInjector.inject(instance, configuration, fac.getOrNull(ConverterManager::class.java))
             }
-        }else instanceSupplier
+        } else instanceSupplier
 
         builder.instanceSupplier(instanceSupplierWithConfig)
 
@@ -239,6 +245,9 @@ constructor(
         injectChildren(beanDepend, defaultBeansAnnotation).forEach {
             register(it)
         }
+
+        // register pass.
+        registerPass(type)
     }
 
     /**
@@ -319,12 +328,16 @@ constructor(
                 } else realInstanceSupplier
 
                 // 如果可以作为Config注入, 追加配置注入
-                val instanceSupplierWithConfig: InstanceSupplier<Any> = if(configuration !=null && asConfig) {
+                val instanceSupplierWithConfig: InstanceSupplier<Any> = if (configuration != null && asConfig) {
                     InstanceSupplier { fac ->
                         val instance: Any = instanceSupplier(fac)
-                        ConfigurationInjector.inject(instance, configuration, fac.getOrNull(ConverterManager::class.java))
+                        ConfigurationInjector.inject(
+                            instance,
+                            configuration,
+                            fac.getOrNull(ConverterManager::class.java)
+                        )
                     }
-                }else instanceSupplier
+                } else instanceSupplier
 
                 // // 完整实例构建函数
                 // val instanceSupplier: InstanceSupplier<*> = InstanceSupplier { fac ->
@@ -561,6 +574,94 @@ constructor(
 
 
     /**
+     * 解析并注册一个类型下的pass。如果有的话。
+     *
+     * 只会解析 **public** **void** 的方法。
+     */
+    private fun registerPass(type: Class<*>) {
+        // 寻找所有标注了 @Pass 注解的方法。
+        type.declaredMethods.asSequence()
+            .filter {
+                AnnotationUtil.getAnnotation(it, Pass::class.java) != null
+            }.map {
+                val modifiers = it.modifiers
+                // must be public.
+                if (!Modifier.isPublic(modifiers)) {
+                    throw IllegalStateException("@Pass must annotate in public method, but '$it' is not public.")
+                }
+
+                // cannot be static.
+                if (Modifier.isStatic(modifiers)) {
+                    throw IllegalStateException("@Pass cannot annotate static method, but '$it' is static.")
+                }
+
+                // return type must be void.
+                val returnType: Class<*> = it.returnType
+                if (returnType != Void.TYPE) {
+                    throw IllegalStateException("@Pass annotated method's return type must be 'void', but '$it' is '$returnType'")
+                }
+
+                // to DependPass
+
+                val passAnnotation: Pass = AnnotationUtil.getAnnotation(it, Pass::class.java)!!
+
+                it.toDependPass(passAnnotation.priority) to passAnnotation
+            }.forEach {
+                registerPass(it.first, it.second)
+            }
+
+    }
+
+
+    /**
+     * 注册一个 [DependPass] 实例。
+     */
+    private fun registerPass(pass: DependPass, passAnnotation: Pass) {
+        registerPass(pass, passAnnotation.preInit, passAnnotation.postInit)
+    }
+
+
+    /**
+     * 注册一个 [DependPass] 实例。
+     */
+    private fun registerPass(pass: DependPass, pre: Boolean, post: Boolean) {
+        if (pre) {
+            registerPrePass(pass)
+        }
+        if (post) {
+            registerPostPass(pass)
+        }
+    }
+
+
+    /**
+     * 注册一个pre pass
+     */
+    private fun registerPrePass(prePass: DependPass) {
+        if (!initialized) {
+            synchronized(initializedLock) {
+                preInitPasses.add(prePass)
+            }
+        } else {
+            prePass(this)
+        }
+    }
+
+    /**
+     * 注册一个post pass
+     */
+    private fun registerPostPass(postPass: DependPass) {
+        if (!initialized) {
+            synchronized(initializedLock) {
+                postInitPasses.add(postPass)
+            }
+        } else {
+            postPass(this)
+        }
+    }
+
+
+    /**
      * 注册一个beanDepend. 直接注册
      *
      * @throws IllegalArgumentException 如果name出现重复, 则可能抛出此异常
@@ -570,7 +671,7 @@ constructor(
         nameResourceWarehouse.merge(name, beanDepend, mergeDuplicate(name))
         // 需要init但是还没有init过
         if (beanDepend.needInit && !initialized) {
-            synchronized(needInitialized) {
+            synchronized(initializedLock) {
                 needInitialized.add(beanDepend)
             }
         } else {
@@ -584,10 +685,10 @@ constructor(
      * 如果这个type是[BeanDependRegistrar]的实现类, 则构建其实例并执行，而不注入到依赖中。
      */
     override fun register(type: Class<*>) {
-        if(type.isAssignableFrom(BeanDependRegistrar::class.java)) {
+        if (BeanDependRegistrar::class.java.isAssignableFrom(type)) {
             val registrar: BeanDependRegistrar = type.newInstance() as BeanDependRegistrar
             registrar.registerBeanDepend(AnnotationHelper, this)
-        }else{
+        } else {
             inject(null, type)
         }
     }
@@ -725,6 +826,13 @@ constructor(
         private val defaultBeansAnnotation: Beans = AnnotationUtil.getDefaultAnnotationProxy(Beans::class.java)
     }
 }
+
+
+/**
+ * 将Method转化为 [DependPass] 实例。
+ */
+internal fun Method.toDependPass(priority: Int): DependPass = MethodDependPass(this, priority)
+
 
 /**
  * 如果出现重复的name，抛出异常。

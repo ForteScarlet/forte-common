@@ -25,7 +25,7 @@ public interface DependBeanFactory {
     /**
      * 根据类型获取一个依赖实例。
      * @param type 类型
-     * @throws NoSuchDependException 如果依赖没有找到则抛出异常
+     * @throws NoSuchDependException 如果依赖没有找到则抛出异常。
      * @return 实例
      */
     <T> T get(Class<T> type);
@@ -46,6 +46,7 @@ public interface DependBeanFactory {
      * @return 实例
      */
     Object get(String name);
+
     /**
      * 根据类型获取一个依赖实例。获取不到则会返回null。
      * @param type 类型

@@ -18,6 +18,7 @@ import java.lang.reflect.AnnotatedElement
 
 /**
  * 可以动态注入bean的接口。实现了此接口的bean最终不应被注入到依赖中心。
+ *
  */
 public interface BeanDependRegistrar {
     fun registerBeanDepend(annotationHelper: AnnotationHelper, beanDependRegistry: BeanDependRegistry)
