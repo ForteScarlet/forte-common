@@ -819,10 +819,26 @@ constructor(
         return parentValue ?: getDepend(name)?.instanceSupplier?.invoke(this)
     }
 
+
+    /**
+     * 查询所有类型下子类型的结果
+     */
+    override fun getListByType(type: Class<*>): MutableCollection<Any> {
+        // 如果没有父类，则说明其为基类，不再过滤，返回所有结果
+        return if (type.superclass == null) {
+            mutableListOf(nameResourceWarehouse.values)
+        }else {
+            nameResourceWarehouse.values.asSequence().filter {
+                type.isAssignableFrom(it.type)
+            }.toMutableList()
+        }
+    }
+
     /**
      * companion object.
      */
     companion object {
+        // default Beans annotation proxy instance.
         private val defaultBeansAnnotation: Beans = AnnotationUtil.getDefaultAnnotationProxy(Beans::class.java)
     }
 }

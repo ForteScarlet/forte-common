@@ -14,6 +14,9 @@ package love.forte.common.ioc;
 
 import love.forte.common.ioc.exception.NoSuchDependException;
 
+import java.util.Collection;
+import java.util.List;
+
 /**
  *
  * 依赖bean工厂，用于得到依赖工厂中管理的bean。
@@ -69,6 +72,14 @@ public interface DependBeanFactory {
      */
     Object getOrNull(String name);
 
+
+    /**
+     * 根据类型获取所有此类型子类型的依赖。
+     *
+     * @param type 父类型。不可为null。
+     * @return 结果列表。
+     */
+    Collection<Object> getListByType(Class<?> type);
 
 
 }
