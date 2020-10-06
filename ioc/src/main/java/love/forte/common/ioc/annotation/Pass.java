@@ -40,6 +40,6 @@ public @interface Pass {
     /**
      * 优先级。
      */
-    int priority() default Integer.MIN_VALUE;
+    int priority() default Integer.MAX_VALUE;
 
 }

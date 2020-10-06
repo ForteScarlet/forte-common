@@ -31,7 +31,7 @@ public interface DependPass {
      */
     @JvmDefault
     val priority: Int
-        get() = Int.MIN_VALUE
+        get() = Int.MAX_VALUE
 
 }
 
