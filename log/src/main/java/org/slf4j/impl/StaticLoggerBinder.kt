@@ -22,7 +22,7 @@ object StaticLoggerBinder {
     /**
      * 配置信息
      */
-    private val configuration: NekoLogConfiguration by lazy(LazyThreadSafetyMode.NONE) {
+    private val configuration: NekoLogConfiguration by lazy(LazyThreadSafetyMode.PUBLICATION) {
         try {
             // conf by nekolog.yml / nekolog.properties
             var type = "yml"
@@ -51,7 +51,7 @@ object StaticLoggerBinder {
     /**
      * logger factory
      */
-    val loggerFactory: ILoggerFactory by lazy(LazyThreadSafetyMode.NONE) {
+    val loggerFactory: ILoggerFactory by lazy(LazyThreadSafetyMode.PUBLICATION) {
         // 颜色格式化工厂
         val colorBuilderFactory: ColorBuilderFactory = if(configuration.enableColor) {
             NormalColorBuilderFactory
