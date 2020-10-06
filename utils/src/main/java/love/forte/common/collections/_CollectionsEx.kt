@@ -16,7 +16,7 @@ package love.forte.common.collections
 
 
 /*
-    为kotlin提供一些对于collections的额外的方法.
+    为kotlin提供一些对于collection相关的额外的方法.
  */
 
 /**
@@ -62,5 +62,6 @@ data class ArraySet<T>(private val array: Array<T>) : Set<T> {
  * array set of.
  */
 public fun <T> arraySetOf(vararg value: T) : Set<T> = ArraySet(value)
+
 
 
