@@ -819,18 +819,18 @@ constructor(
         return parentValue ?: getDepend(name)?.instanceSupplier?.invoke(this)
     }
 
-
     /**
      * 查询所有类型下子类型的结果
      */
-    override fun getListByType(type: Class<*>): MutableCollection<Any> {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Any> getListByType(type: Class<T>): MutableCollection<out T> {
         // 如果没有父类，则说明其为基类，不再过滤，返回所有结果
         return if (type.superclass == null) {
-            mutableListOf(nameResourceWarehouse.values)
+            mutableListOf(nameResourceWarehouse.values) as MutableCollection<out T>
         }else {
             nameResourceWarehouse.values.asSequence().filter {
                 type.isAssignableFrom(it.type)
-            }.toMutableList()
+            }.toMutableList() as MutableCollection<out T>
         }
     }
 

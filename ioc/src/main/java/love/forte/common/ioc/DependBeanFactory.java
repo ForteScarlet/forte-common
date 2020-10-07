@@ -79,7 +79,7 @@ public interface DependBeanFactory {
      * @param type 父类型。不可为null。
      * @return 结果列表。
      */
-    Collection<Object> getListByType(Class<?> type);
+    <T> Collection<? extends T> getListByType(Class<T> type);
 
 
 }
