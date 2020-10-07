@@ -14,6 +14,9 @@
 
 package love.forte.common.collections
 
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
+
 
 /*
     为kotlin提供一些对于collection相关的额外的方法.
@@ -62,6 +65,65 @@ data class ArraySet<T>(private val array: Array<T>) : Set<T> {
  * array set of.
  */
 public fun <T> arraySetOf(vararg value: T) : Set<T> = ArraySet(value)
+
+
+
+//**************************************
+//*             Queue of.
+//**************************************
+
+/**
+ * Queue of.
+ */
+public fun <T> queueOf(vararg elements: T): Queue<T> = if (elements.isEmpty()) LinkedList() else LinkedList(elements.toList())
+
+/**
+ * Concurrent queue of.
+ */
+public fun <T> concurrentQueueOf(vararg elements: T): Queue<T> = if (elements.isEmpty()) ConcurrentLinkedQueue() else ConcurrentLinkedQueue(elements.toList())
+
+
+
+//**************************************
+//*             sorted queue.
+//**************************************
+
+/**
+ * Sorted queue of.
+ */
+public fun <T> sortedQueueOf(comparator: Comparator<T>, vararg elements: T): Queue<T> = SortedQueue(comparator, *elements)
+
+/**
+ * Sorted queue of.
+ */
+public fun <T> sortedQueueOf(comparator: Comparator<T>): Queue<T> = SortedQueue(comparator)
+
+/**
+ * Sorted queue of.
+ */
+public fun <T> sortedQueueOf(vararg elements: T): Queue<T> = SortedQueue(*elements)
+
+/**
+ * Concurrent sorted queue of.
+ */
+public fun <T> concurrentSortedQueueOf(comparator: Comparator<T>, vararg elements: T): Queue<T> = ConcurrentSortedQueue(comparator, *elements)
+
+/**
+ * Concurrent sorted queue of.
+ */
+public fun <T> concurrentSortedQueueOf(comparator: Comparator<T>): Queue<T> = ConcurrentSortedQueue(comparator)
+
+/**
+ * Concurrent sorted queue of.
+ */
+public fun <T> concurrentSortedQueueOf(vararg elements: T): Queue<T> = ConcurrentSortedQueue(*elements)
+
+
+
+
+
+
+
 
 
 
