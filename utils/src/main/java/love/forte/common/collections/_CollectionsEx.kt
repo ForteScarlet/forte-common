@@ -10,7 +10,7 @@
  * QQ     1149159218
  */
 
-@file:JvmName("CollectionsExpand")
+@file:JvmName("CollectionsExpandFunctions")
 
 package love.forte.common.collections
 
