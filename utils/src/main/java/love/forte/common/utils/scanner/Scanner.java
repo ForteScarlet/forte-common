@@ -10,11 +10,10 @@
  * QQ     1149159218
  */
 
-package love.forte.common.utils;
+package love.forte.common.utils.scanner;
 
 import java.util.Collection;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /**
  *
@@ -33,15 +32,15 @@ public interface Scanner<P, T> {
      * @param filter 匹配规则。
      * @return 扫描器本身，链式调用。
      */
-    Scanner<P, T> find(String path, Predicate<T> filter);
+    Scanner<P, T> scan(String path, Predicate<T> filter);
 
     /**
      * 寻找某个路径下的目标。
      * @param path 路径。
      * @return 扫描器本身，链式调用。
      */
-    default Scanner<P, T> find(String path) {
-        return find(path, t -> true);
+    default Scanner<P, T> scan(String path) {
+        return scan(path, t -> true);
     }
 
 
@@ -50,12 +49,5 @@ public interface Scanner<P, T> {
      * @return 最终的扫描结果
      */
     Collection<T> getCollection();
-
-
-    /**
-     * 获取最终的扫描结果，并作为一个流返回。
-     * @return 最终的扫描结果
-     */
-    Stream<T> getStream();
 
 }

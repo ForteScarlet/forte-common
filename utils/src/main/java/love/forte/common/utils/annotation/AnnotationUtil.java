@@ -391,6 +391,10 @@ public class AnnotationUtil {
                         name = method.getName();
                     }
                     try {
+                        if (!method.isAccessible()) {
+                            method.setAccessible(true);
+                        }
+
                         Object value = method.invoke(from);
                         params.put(name, value);
                     } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {

@@ -13,7 +13,6 @@
 package love.forte.common.ioc
 
 
-
 /**
  * 用于 [BeanDepend] 中的用于获取实例的函数。
  */
@@ -29,7 +28,7 @@ public fun interface InstanceInjector<T> : (T, DependBeanFactory) -> T
  * Bean Depend, 存放于 [DependCenter] 中的Bean代表。
  * 提供一个简易的 [builder][BeanDependBuilder] 来构建一个实例。
  */
-public interface BeanDepend<B> : Comparable<BeanDepend<*>> {
+public interface BeanDepend<out B> : Comparable<BeanDepend<*>> {
 
     /**
      * 此bean对应的实际数据类型
@@ -73,7 +72,6 @@ public interface BeanDepend<B> : Comparable<BeanDepend<*>> {
 }
 
 
-
 /**
  * [BeanDepend] 的实现类
  */
@@ -88,7 +86,8 @@ public class BeanDependData<B>(
 ) : BeanDepend<B> {
     override fun isSingle(): Boolean = single
 
-    override fun toString(): String = "BeanDepend(type=$type, name=$name, single=$single, needInit=$needInit, instanceSupplier=$instanceSupplier, priority=$priority)"
+    override fun toString(): String =
+        "BeanDepend(type=$type, name=$name, single=$single, needInit=$needInit, instanceSupplier=$instanceSupplier, priority=$priority)"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -114,6 +113,45 @@ public class BeanDependData<B>(
 
 }
 
+
+/**
+ * 将一个实例作为 [BeanDepend]。
+ */
+public data class InstanceBeanDepend<B>
+@JvmOverloads
+constructor(
+    override val name: String,
+    override val priority: Int = 90,
+    private val instance: B
+) : BeanDepend<B> {
+    /**
+     * 此bean对应的实际数据类型
+     */
+    override val type: Class<out B> = instance!!::class.java
+
+    /**
+     * 是否应为单例
+     */
+    override fun isSingle(): Boolean = true
+
+    /**
+     * 获取一个实例的函数
+     */
+    override val instanceSupplier: InstanceSupplier<B> = InstanceSupplier { instance }
+
+    /**
+     * 需要被初始化
+     */
+    override val needInit: Boolean = false
+
+    /**
+     * 可以被Config注入
+     */
+    override val asConfig: Boolean = false
+
+}
+
+
 /**
  * builder. 必须要有 [type]、[name]、[instanceSupplier]、[instanceInjector]
  */
@@ -125,6 +163,7 @@ public open class BeanDependBuilder<B> {
     private var needInit: Boolean = false
     private var asConfig: Boolean = false
     private var instanceSupplier: InstanceSupplier<B>? = null
+
     // private var instanceInjector: InstanceInjector<B> = InstanceInjector { b, _ -> b }
     private var priority: Int = 90
 

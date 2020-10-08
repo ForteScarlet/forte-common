@@ -32,6 +32,9 @@ import java.lang.reflect.Modifier
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiFunction
+import java.util.function.Function
+import java.util.function.Supplier
+import kotlin.NoSuchElementException
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.javaSetter
@@ -159,13 +162,16 @@ constructor(
      * @throws NotBeansException 如果类上、方法上都找不到[Beans]相关注解，抛出此异常。
      */
     private fun <T> inject0(defaultAnnotation: Beans? = defaultBeansAnnotation, type: Class<out T>) {
-        // 自动解析的情况下, target type 不可以是抽象类型或者接口理类型
+        // 自动解析的情况下, target type 不可以是抽象类型、接口类型、注解类型、枚举类型
         if (type.isInterface || Modifier.isAbstract(type.modifiers)) {
             throw IllegalTypeException("$type cannot be interface or abstract.")
         }
+        if (type.isAnnotation || type.isEnum) {
+            throw IllegalTypeException("$type cannot be annotation or enum type.")
+        }
 
         // 如果是BeanDependRegistrar的实现类, 则会直接执行.
-        if (type.isAssignableFrom(BeanDependRegistrar::class.java)) {
+        if (BeanDependRegistrar::class.java.isAssignableFrom(type)) {
             val registrar: BeanDependRegistrar = type.newInstance() as BeanDependRegistrar
             registrar.registerBeanDepend(AnnotationHelper, this)
             return
@@ -316,13 +322,6 @@ constructor(
                                         singletonMap[beanDependName] = instance
                                         instance
                                     }
-
-                                // val singleton0: Any? = singletonMap[beanDependName]
-                                // if(singleton0 == null){
-                                //     val instance: Any = realInstanceSupplier(fac)
-                                //     singletonMap[beanDependName] = instance
-                                //     instance
-                                // }else singleton0
                             }
                     }
                 } else realInstanceSupplier
@@ -427,7 +426,11 @@ constructor(
                 if (depend == null) {
                     val paramType = it.type
                     // no depend annotation. by type.
-                    { d -> d[paramType] }
+                    // println("")
+
+                    { d ->
+                        d.getOrThrow(paramType) { e -> NoSuchDependException("${e.localizedMessage} in-> $method($it)") }
+                    }
                 } else {
                     // depend.
                     val dependValue = depend.value
@@ -451,7 +454,6 @@ constructor(
                     }
                 }
             }
-
 
 
         return { factory ->
@@ -487,6 +489,9 @@ constructor(
             }
         }, true)
 
+
+        // println(type)
+
         return if (depends.isEmpty()) {
             // no depends.
             { b, _ -> b }
@@ -512,17 +517,18 @@ constructor(
                         it.type
                     }
                     if (orNull) { d ->
-                        d.get(needType)
-                    } else { d ->
                         d.getOrNull(needType)
+                    } else { d ->
+                        d.get(needType)
                     }
                 } else {
                     if (orNull) { d ->
-                        d.get(dependName)
-                    } else { d ->
                         d.getOrNull(dependName)
+                    } else { d ->
+                        d.get(dependName)
                     }
                 }
+
 
                 // 通过field进行赋值
                 fun byField(): (T, Any?) -> Unit = { b, v -> v?.apply { it.set(b, this) } }
@@ -564,6 +570,7 @@ constructor(
                     injector(ins, fieldValue)
                 }
             }
+
             // return func
             ({ b, fac ->
                 funcs.forEach { it(b, fac) }
@@ -669,15 +676,25 @@ constructor(
     override fun register(beanDepend: BeanDepend<*>) {
         val name: String = beanDepend.name
         nameResourceWarehouse.merge(name, beanDepend, mergeDuplicate(name))
+
         // 需要init但是还没有init过
-        if (beanDepend.needInit && !initialized) {
-            synchronized(initializedLock) {
-                needInitialized.add(beanDepend)
+        if (beanDepend.needInit) {
+            if (!initialized) {
+                synchronized(initializedLock) {
+                    needInitialized.add(beanDepend)
+                }
+            } else {
+                //init 过了, 直接获取一次
+                beanDepend.instanceSupplier(this)
             }
-        } else {
-            //init 过了, 直接获取一次
-            beanDepend.instanceSupplier(this)
         }
+
+
+        // if (beanDepend.needInit && !initialized) {
+        //
+        // } else if (beanDepend.needInit) {
+        //
+        // }
     }
 
     /**
@@ -819,18 +836,107 @@ constructor(
         return parentValue ?: getDepend(name)?.instanceSupplier?.invoke(this)
     }
 
+
+    /**
+     * 根据类型获取一个依赖实例。获取不到则会抛出对应异常。
+     */
+    override fun <T : Any?> getOrThrow(
+        type: Class<T>,
+        exceptionCompute: Function<NoSuchDependException, NoSuchDependException>
+    ): T {
+        var parentEx: Exception? = null
+        val parentValue: T? = try {
+            parent?.get(type)
+        } catch (e: Exception) {
+            parentEx = e
+            null
+        }
+        return parentValue ?: getDepend(type)?.instanceSupplier?.invoke(this)
+        ?: throw exceptionCompute.apply(parentEx?.let { NoSuchDependException(type.name, it) } ?: NoSuchDependException(
+            type.name
+        ))
+    }
+
+    /**
+     * 根据名称和类型获取一个依赖实例。通过名称获取，并转化为type。获取不到则会抛出对应异常。
+     */
+    override fun <T : Any?> getOrThrow(
+        type: Class<T>,
+        name: String,
+        exceptionCompute: Function<NoSuchDependException, NoSuchDependException>
+    ): T = getOrThrow(name, exceptionCompute) as T
+
+    /**
+     * 根据名称获取一个依赖。获取不到则会抛出对应异常。
+     */
+    override fun getOrThrow(
+        name: String,
+        exceptionCompute: Function<NoSuchDependException, NoSuchDependException>
+    ): Any {
+        var parentEx: Exception? = null
+        val parentValue: Any? = try {
+            parent?.get(name)
+        } catch (e: Exception) {
+            parentEx = e
+            null
+        }
+        return parentValue ?: getDepend(name)?.instanceSupplier?.invoke(this)
+        ?: throw exceptionCompute.apply(parentEx?.let { NoSuchDependException(name, it) }
+            ?: NoSuchDependException(name))
+    }
+
+    /**
+     * 获取所有beans的key。
+     */
+    override fun getAllBeans(): MutableSet<String> {
+        return parent?.let {
+            mutableSetOf<String>()
+                .apply { addAll(it.allBeans) }
+                .apply { addAll(nameResourceWarehouse.keys) }
+        } ?: nameResourceWarehouse.keys.toMutableSet()
+
+    }
+
+
+    /**
+     * 获取一个bean对应的类型。如果此bean存在的话。
+     * 有时候可能不支持根据名称获取类型，
+     * 因此请不要过于依赖此方法。
+     * @param name bean
+     * @return 对应类型
+     */
+    override fun getType(name: String?): Class<*>? =
+        parent?.getType(name) ?: nameResourceWarehouse[name]?.type
+
+
     /**
      * 查询所有类型下子类型的结果
      */
     @Suppress("UNCHECKED_CAST")
-    override fun <T : Any> getListByType(type: Class<T>): MutableCollection<out T> {
+    fun <T : Any> getListByType(type: Class<T>): MutableCollection<out T> {
         // 如果没有父类，则说明其为基类，不再过滤，返回所有结果
         return if (type.superclass == null) {
-            mutableListOf(nameResourceWarehouse.values) as MutableCollection<out T>
-        }else {
+            nameResourceWarehouse.values.map { it.instanceSupplier(this) } as MutableCollection<out T>
+        } else {
             nameResourceWarehouse.values.asSequence().filter {
                 type.isAssignableFrom(it.type)
-            }.toMutableList() as MutableCollection<out T>
+            }.map { it.instanceSupplier(this) }.toMutableList() as MutableCollection<out T>
+        }
+    }
+
+    /**
+     * 查询所有的结果并作为Map返回。
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Any> getListByTypeWithName(type: Class<T>): MutableMap<String, out T> {
+        // 如果没有父类，则说明其为基类，不再过滤，返回所有结果
+        return if (type.superclass == null) {
+            nameResourceWarehouse.map { (k, v) -> k to v.instanceSupplier(this) }.toMap()
+                .toMutableMap() as MutableMap<String, out T>
+        } else {
+            nameResourceWarehouse.asSequence().filter { (_, v) ->
+                type.isAssignableFrom(v.type)
+            }.map { (k, v) -> k to v.instanceSupplier(this) }.toMap().toMutableMap() as MutableMap<String, out T>
         }
     }
 
@@ -876,12 +982,16 @@ internal val Method.dependName: String
         val name: String = this.name
         return if (name.length > 3 && name.startsWith("get") && name[3].isUpperCase()) {
             val propertyName: String = name[3].toLowerCase() + name.substring(4)
-            // class name + . + name
-            "$declaringClass.$propertyName"
+            // class name + # + name
+            "${declaringClass.dependName}#$propertyName"
         } else {
-            "$declaringClass.$name"
+            "${declaringClass.dependName}#$name"
         }
 
     }
 
 
+// internal fun <T> DependBeanFactory.getOrThrow(type: Class<T>, from: String): T =
+//     runCatching {
+//         this[type]
+//     }.getOrElse { if (it is NoSuchDependException) throw NoSuchDependException(it.localizedMessage + " @ " + from) else throw it }

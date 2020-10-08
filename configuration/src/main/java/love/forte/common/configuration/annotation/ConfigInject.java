@@ -53,10 +53,17 @@ public @interface ConfigInject {
      */
     boolean bySetter() default true;
 
+    /**
+     * 如果找不到对应的配置，则注入一个默认值。
+     * 值类型为数组，但是仅取第一个值。
+     * 如果没有值则视为不使用默认值。
+     */
+    String[] orDefault() default {};
 
     /**
-     * 如果找不到对应的配置，则注入null。默认会抛出异常。
+     * 如果找不到对应的配置，且不存在默认值，则注入null。默认会抛出异常。
      */
     boolean orNull() default false;
+
 
 }

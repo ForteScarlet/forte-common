@@ -33,7 +33,11 @@ private inline class ConfigTarget<T>(val member: KCallable<T>) {
         member.let {
             if (member is KMutableProperty) {
                 member.isAccessible = true
-                member.setter.call(target, arg)
+                kotlin.runCatching {
+                    member.setter.call(target, arg)
+                }.getOrElse {
+                    throw IllegalArgumentException("${member.setter.propName} called '$arg'}", it)
+                }
             } else {
                 if (arg != null) member.call(target, arg) else member.call(target)
             }
@@ -159,6 +163,9 @@ private data class InjectCallable<out T>(
             config != null -> {
                 config.getObject<T>(configTarget.valueType)
             }
+            configInjectData.defaultValue != null -> {
+                manager.convert(configTarget.valueType, configInjectData.defaultValue)
+            }
             configInjectData.orNull -> {
                 null
             }
@@ -239,6 +246,13 @@ private inline class ConfigInjectData(val configInject: ConfigInject?) {
      */
     val bySetter: Boolean get() = configInject?.bySetter ?: true
 
+    /**
+     * 默认值。
+     * 如果存在默认值，则尝试使用默认值注入。
+     */
+    val defaultValue: String? get() = with(configInject?.orDefault ?: emptyArray()) {
+        if (isEmpty()) null else get(0)
+    }
 
     /**
      * 如果找不到对应的配置，则注入null。默认会抛出异常。
