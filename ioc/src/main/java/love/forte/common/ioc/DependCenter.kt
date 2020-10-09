@@ -16,6 +16,7 @@ import love.forte.common.annotation.Ignore
 import love.forte.common.configuration.Configuration
 import love.forte.common.configuration.ConfigurationInjector
 import love.forte.common.configuration.annotation.AsConfig
+import love.forte.common.configuration.impl.MapConfiguration
 import love.forte.common.ioc.annotation.Beans
 import love.forte.common.ioc.annotation.Constr
 import love.forte.common.ioc.annotation.Depend
@@ -51,6 +52,7 @@ import kotlin.reflect.jvm.kotlinProperty
  * @param singletonMap 保存单例的map。在put的时候会有同步锁，所以应该不需要线程安全的Map.
  * @param nameResourceWarehouse 保存依赖的map。以name为key, 对应着唯一的值，也是其他sourceWarehouse中最终指向的地方。
  * @param parent 依赖中心的父类依赖。可以通过 [mergeParent] 来指定一个新的 parent.
+ * @param configuration 可以提供一个configuration来实现自动配置注入。默认为一个空的 [MapConfiguration]。不可为null。
  */
 public class DependCenter
 @JvmOverloads
@@ -59,7 +61,7 @@ constructor(
     private val nameResourceWarehouse: MutableMap<String, BeanDepend<*>> = ConcurrentHashMap<String, BeanDepend<*>>(),
     @Volatile
     private var parent: DependBeanFactory? = null,
-    private val configuration: Configuration? = null // auto config able.
+    var configuration: Configuration = MapConfiguration() // auto config able.
 ) : BeanDependRegistry, DependBeanFactory, Closeable {
 
 
@@ -235,10 +237,12 @@ constructor(
         } else realInstanceSupplier
 
         // 如果可以作为Config注入, 追加配置注入
-        val instanceSupplierWithConfig: InstanceSupplier<T> = if (configuration != null && asConfig) {
+        val instanceSupplierWithConfig: InstanceSupplier<T> = if (asConfig) {
             InstanceSupplier { fac ->
                 val instance: T = instanceSupplier(fac)
-                ConfigurationInjector.inject(instance, configuration, fac.getOrNull(ConverterManager::class.java))
+                with(this.configuration) {
+                    ConfigurationInjector.inject(instance, this, fac.getOrNull(ConverterManager::class.java))
+                }
             }
         } else instanceSupplier
 
@@ -327,14 +331,19 @@ constructor(
                 } else realInstanceSupplier
 
                 // 如果可以作为Config注入, 追加配置注入
-                val instanceSupplierWithConfig: InstanceSupplier<Any> = if (configuration != null && asConfig) {
+                val instanceSupplierWithConfig: InstanceSupplier<Any> = if (asConfig) {
                     InstanceSupplier { fac ->
                         val instance: Any = instanceSupplier(fac)
-                        ConfigurationInjector.inject(
-                            instance,
-                            configuration,
-                            fac.getOrNull(ConverterManager::class.java)
-                        )
+
+                        with(this.configuration) {
+                            ConfigurationInjector.inject(
+                                instance,
+                                this,
+                                fac.getOrNull(ConverterManager::class.java)
+                            )
+                        }
+
+
                     }
                 } else instanceSupplier
 
@@ -749,6 +758,14 @@ constructor(
 
 
     /**
+     * 尝试从已经实例化的单例中获取对应的类型。
+     */
+    private fun <T : Any?> getTypeFromSingleton(type: Class<T>): T? {
+        return singletonMap.values.find { type.isInstance(it) } as? T
+    }
+
+
+    /**
      * 根据类型获取一个依赖实例。
      * @param type 类型
      * @throws NoSuchDependException 如果依赖没有找到则抛出异常
@@ -762,7 +779,9 @@ constructor(
             parentException = e
             null
         }
-        return parentValue ?: getDepend(type)?.instanceSupplier?.invoke(this) ?: throw run {
+        return parentValue ?: getDepend(type)?.instanceSupplier?.invoke(this)
+        ?: getTypeFromSingleton(type)
+        ?: throw run {
             parentException?.let { NoSuchDependException(type.toString(), it) }
                 ?: NoSuchDependException(type.toString())
         }

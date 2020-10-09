@@ -43,6 +43,9 @@ public interface Configuration {
     /**
      * 获取一项配置信息。
      *
+     * 其中，key一般是 `aaa.bbb.cccCCC`的格式，
+     * 或者 `aaa.bbb.ccc-ccc`的格式。
+     *
      * @param key 这项配置的键。
      * @return 得到的信息
      */

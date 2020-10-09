@@ -91,7 +91,9 @@ public abstract class BaseLoggerFormatter(private val textFormat: (String?, Arra
         val builder = info.colorBuilder
         // [time][threadName] [level] stackTrace : msg
 
-        val color: ColorTypes = info.level?.color ?: FontColorTypes.BLUE
+        val level = info.level
+
+        val color: ColorTypes = level?.color ?: FontColorTypes.BLUE
 
         builder.color(color)
 
@@ -101,7 +103,7 @@ public abstract class BaseLoggerFormatter(private val textFormat: (String?, Arra
             builder.add("[", threadName, "]")
         }
         builder.add(" ")
-        info.level?.apply {
+        level?.apply {
             builder.add("[", this.name.text, "] ")
         }
         info.name?.apply {
@@ -136,17 +138,22 @@ object LanguageLoggerFormatter :
 object NoLanguageLoggerFormatter : BaseLoggerFormatter({ text, _ -> text ?: "null" })
 
 
+private const val lengthThreshold = 60
+
+
 internal fun StackTraceElement.show(name: String? = null): String {
     return this.toString().let {
         if (name != null && it.startsWith(name)) {
             it.substring(name.length)
-        } else if (it.length < 50) {
+        } else if (it.length < lengthThreshold) {
             it
         } else {
-            val sb = StringBuilder(50)
+            val sb = StringBuilder(lengthThreshold)
             val split: List<String> = className.split(".")
             split.forEachIndexed { index, s ->
-                if (index < split.lastIndex) {
+                if(index == 0) {
+                    sb.append(s).append('.')
+                } else if (index < split.lastIndex) {
                     sb.append(s.firstOrNull().toString()).append('.')
                 } else sb.append(s)
             }

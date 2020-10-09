@@ -17,6 +17,7 @@ import love.forte.common.configuration.ConfigurationProperty;
 
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -51,7 +52,34 @@ public class MapConfiguration extends LinkedHashMap<String, ConfigurationPropert
      */
     @Override
     public ConfigurationProperty getConfig(String key) {
+        // key = resetKey(key);
         return get(key);
+    }
+
+
+    /**
+     * 将 `aaa.bbb.ccc-ddd` 的格式转化为 `aaa.bbb.cccDdd`
+     */
+    private String resetKey(String key) {
+        if(key.contains("-")) {
+            final String[] split = key.split("-");
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < split.length; i++) {
+                String s = split[i];
+                if(i == 0){
+                    sb.append(s);
+                } else {
+                    char first = s.charAt(0);
+                    if(Character.isLowerCase(first)){
+                        first = Character.toUpperCase(first);
+                    }
+                    sb.append(first).append(s.substring(1));
+                }
+            }
+            return sb.toString();
+        } else {
+            return key;
+        }
     }
 
     /**
@@ -65,6 +93,7 @@ public class MapConfiguration extends LinkedHashMap<String, ConfigurationPropert
      */
     @Override
     public ConfigurationProperty setConfig(String key, ConfigurationProperty config) {
+        // key = resetKey(key);
         return put(key, config);
     }
 
@@ -117,5 +146,70 @@ public class MapConfiguration extends LinkedHashMap<String, ConfigurationPropert
             }
         }
         return list;
+    }
+
+    @Override
+    public ConfigurationProperty get(Object key) {
+        return super.get(resetKey(key.toString()));
+    }
+
+    @Override
+    public ConfigurationProperty remove(Object key) {
+        return super.remove(resetKey(key.toString()));
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        return super.containsKey(resetKey(key.toString()));
+    }
+
+    @Override
+    public boolean replace(String key, ConfigurationProperty oldValue, ConfigurationProperty newValue) {
+        return super.replace(resetKey(key), oldValue, newValue);
+    }
+
+    @Override
+    public boolean remove(Object key, Object value) {
+        return super.remove(resetKey(key.toString()), value);
+    }
+
+    @Override
+    public ConfigurationProperty compute(String key, BiFunction<? super String, ? super ConfigurationProperty, ? extends ConfigurationProperty> remappingFunction) {
+        return super.compute(resetKey(key), remappingFunction);
+    }
+
+    @Override
+    public ConfigurationProperty computeIfAbsent(String key, Function<? super String, ? extends ConfigurationProperty> mappingFunction) {
+        return super.computeIfAbsent(resetKey(key), mappingFunction);
+    }
+
+    @Override
+    public ConfigurationProperty computeIfPresent(String key, BiFunction<? super String, ? super ConfigurationProperty, ? extends ConfigurationProperty> remappingFunction) {
+        return super.computeIfPresent(resetKey(key), remappingFunction);
+    }
+
+    @Override
+    public ConfigurationProperty merge(String key, ConfigurationProperty value, BiFunction<? super ConfigurationProperty, ? super ConfigurationProperty, ? extends ConfigurationProperty> remappingFunction) {
+        return super.merge(resetKey(key), value, remappingFunction);
+    }
+
+    @Override
+    public ConfigurationProperty put(String key, ConfigurationProperty value) {
+        return super.put(resetKey(key), value);
+    }
+
+    @Override
+    public ConfigurationProperty putIfAbsent(String key, ConfigurationProperty value) {
+        return super.putIfAbsent(resetKey(key), value);
+    }
+
+    @Override
+    public ConfigurationProperty replace(String key, ConfigurationProperty value) {
+        return super.replace(resetKey(key), value);
+    }
+
+    @Override
+    public ConfigurationProperty getOrDefault(Object key, ConfigurationProperty defaultValue) {
+        return super.getOrDefault(resetKey(key.toString()), defaultValue);
     }
 }

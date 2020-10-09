@@ -203,11 +203,18 @@ public class AnnotationUtil {
         Annotation[] annotations = from.getAnnotations();
 
         if (!repeatable) {
-            // 不是可重复注解, 递归查询
+            // 不是可重复注解的父类类型, 递归查询
             annotation = annotable ? getAnnotationFromArrays(fromInstance, annotations, annotationType, ignored) : null;
         } else {
             List<Annotation> annotationList = new ArrayList<>();
-            // 是可重复注解, 得到他对应的父类注解类型.
+
+            // 先尝试直接获取
+            Annotation getForm = from.getAnnotation(childrenValueAnnotateType);
+            if(getForm != null) {
+                annotationList.add(getForm);
+            }
+
+            // 是可重复注解的父类类型, 得到他对应的子类注解类型.
             for (Annotation annotate : annotations) {
                 final Annotation getAnnotation = getAnnotation(annotate, annotate.annotationType(), childrenValueAnnotateType);
                 if (getAnnotation != null) {

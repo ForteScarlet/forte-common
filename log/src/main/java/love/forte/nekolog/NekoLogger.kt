@@ -20,17 +20,19 @@ import java.io.PrintStream
 /**
  * 将不会对带有Marker的进行实现。
  */
-open class NekoLogger(private val logName: String,
-                      private val colorBuilderFactory: ColorBuilderFactory,
-                      private val level: Int,
-                      private val msgFormatter: LoggerFormatter) : MarkerIgnoringBase() {
+open class NekoLogger(
+    private val logName: String,
+    private val colorBuilderFactory: ColorBuilderFactory,
+    private val level: Int,
+    private val msgFormatter: LoggerFormatter
+) : MarkerIgnoringBase() {
 
 
-    protected open val tracePrint : PrintStream = System.out
-    protected open val debugPrint : PrintStream = System.out
-    protected open val infoPrint : PrintStream = System.out
-    protected open val warnPrint : PrintStream = System.out
-    protected open val errPrint : PrintStream = System.err
+    protected open val tracePrint: PrintStream = System.out
+    protected open val debugPrint: PrintStream = System.out
+    protected open val infoPrint: PrintStream = System.out
+    protected open val warnPrint: PrintStream = System.out
+    protected open val errPrint: PrintStream = System.err
 
     private fun isEnable(level: Level): Boolean {
         return isEnable(level.toInt())
@@ -49,13 +51,12 @@ open class NekoLogger(private val logName: String,
     private fun log(msg: String?, level: Level, printStream: PrintStream, err: Throwable?, vararg args: Any?) {
         val th: Thread = Thread.currentThread()
         val stack: StackTraceElement = th.stackTrace[3]
-        if(isEnable(level)) {
+        if (isEnable(level)) {
             val formatInfo = FormatterInfo(msg, level, logName, th, stack, colorBuilderFactory.getColorBuilder(), args)
             printStream.println(msgFormatter.format(formatInfo))
             err?.printStackTrace(printStream)
         }
     }
-
 
 
     /**
@@ -160,15 +161,19 @@ open class NekoLogger(private val logName: String,
     override fun debug(msg: String?) {
         log(msg, Level.DEBUG, debugPrint, null)
     }
+
     override fun debug(format: String?, arg: Any?) {
         log(format, Level.DEBUG, debugPrint, null, arg)
     }
+
     override fun debug(format: String?, arg1: Any?, arg2: Any?) {
         log(format, Level.DEBUG, debugPrint, null, arg1, arg2)
     }
+
     override fun debug(format: String?, vararg arguments: Any?) {
         log(format, Level.DEBUG, debugPrint, null, arguments)
     }
+
     override fun debug(msg: String?, t: Throwable?) {
         log(msg, Level.DEBUG, debugPrint, t)
     }
@@ -189,15 +194,19 @@ open class NekoLogger(private val logName: String,
     override fun info(msg: String?) {
         log(msg, Level.INFO, infoPrint, null)
     }
+
     override fun info(format: String?, arg: Any?) {
         log(format, Level.INFO, infoPrint, null, arg)
     }
+
     override fun info(format: String?, arg1: Any?, arg2: Any?) {
         log(format, Level.INFO, infoPrint, null, arg1, arg2)
     }
+
     override fun info(format: String?, vararg arguments: Any?) {
         log(format, Level.INFO, infoPrint, null, arguments)
     }
+
     override fun info(msg: String?, t: Throwable?) {
         log(msg, Level.INFO, infoPrint, t)
     }
@@ -218,15 +227,19 @@ open class NekoLogger(private val logName: String,
     override fun warn(msg: String?) {
         log(msg, Level.WARN, warnPrint, null)
     }
+
     override fun warn(format: String?, arg: Any?) {
         log(format, Level.WARN, warnPrint, null, arg)
     }
+
     override fun warn(format: String?, vararg arguments: Any?) {
         log(format, Level.WARN, warnPrint, null, arguments)
     }
+
     override fun warn(format: String?, arg1: Any?, arg2: Any?) {
         log(format, Level.WARN, warnPrint, null, arg1, arg2)
     }
+
     override fun warn(msg: String?, t: Throwable?) {
         log(msg, Level.WARN, warnPrint, t)
     }
@@ -247,15 +260,19 @@ open class NekoLogger(private val logName: String,
     override fun error(msg: String?) {
         log(msg, Level.ERROR, errPrint, null)
     }
+
     override fun error(format: String?, arg: Any?) {
         log(format, Level.ERROR, errPrint, null, arg)
     }
+
     override fun error(format: String?, arg1: Any?, arg2: Any?) {
         log(format, Level.ERROR, errPrint, null, arg1, arg2)
     }
+
     override fun error(format: String?, vararg arguments: Any?) {
         log(format, Level.ERROR, errPrint, null, arguments)
     }
+
     override fun error(msg: String?, t: Throwable?) {
         log(msg, Level.ERROR, errPrint, t)
     }
