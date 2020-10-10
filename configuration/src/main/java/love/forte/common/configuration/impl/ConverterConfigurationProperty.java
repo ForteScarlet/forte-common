@@ -47,6 +47,7 @@ public class ConverterConfigurationProperty implements ConfigurationProperty, Se
     }
 
 
+
     @Override
     public String toString() {
         return key + "=" + value;

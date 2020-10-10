@@ -16,10 +16,13 @@ import java.lang.annotation.*;
 
 /**
  * 标注在方法参数或字段上，代表自动注入。
+ *
+ * 注意：标注在构造函数上的方式尚未实现。
+ *
  * @author <a href="https://github.com/ForteScarlet"> ForteScarlet </a>
  */
 @Retention(RetentionPolicy.RUNTIME)    //注解会在class字节码文件中存在，在运行时可以通过反射获取到
-@Target({ElementType.FIELD, ElementType.PARAMETER}) //接口、类、枚举、注解、方法
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.CONSTRUCTOR}) //接口、类、枚举、注解、方法
 @Documented
 public @interface Depend {
 

@@ -13,7 +13,6 @@
 package love.forte.common.configuration;
 
 /**
- *
  * {@link ConfigurationParserManager} 的构建器，用于构建一个 {@link ConfigurationParserManager} 实例。
  *
  * @author <a href="https://github.com/ForteScarlet"> ForteScarlet </a>

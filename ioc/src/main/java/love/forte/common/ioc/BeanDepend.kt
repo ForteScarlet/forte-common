@@ -148,12 +148,11 @@ constructor(
      * 可以被Config注入
      */
     override val asConfig: Boolean = false
-
 }
 
 
 /**
- * builder. 必须要有 [type]、[name]、[instanceSupplier]、[instanceInjector]
+ * builder. 必须要有 [type]、[name]、[instanceSupplier]
  */
 public open class BeanDependBuilder<B> {
 

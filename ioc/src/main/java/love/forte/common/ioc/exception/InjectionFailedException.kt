@@ -16,7 +16,7 @@ package love.forte.common.ioc.exception
  *
  * @author ForteScarlet -> https://github.com/ForteScarlet
  */
-public class NoSuchDependException : DependException {
+class InjectionFailedException : DependException {
     constructor() : super()
     constructor(message: String?) : super(message)
     constructor(message: String?, cause: Throwable?) : super(message, cause)

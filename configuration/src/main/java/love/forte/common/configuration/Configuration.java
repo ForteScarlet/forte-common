@@ -12,13 +12,11 @@
 
 package love.forte.common.configuration;
 
+import love.forte.common.configuration.impl.LinkedMapConfiguration;
 import love.forte.common.configuration.impl.NullConfigurationProperty;
 
-import java.util.Collection;
 import java.util.Objects;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Predicate;
 
 /**
  *
@@ -33,7 +31,7 @@ import java.util.function.Predicate;
  * 如果想要使某个配置项为null，可以尝试使用 {@link NullConfigurationProperty}。
  *
  *
- * @see love.forte.common.configuration.impl.MapConfiguration
+ * @see LinkedMapConfiguration
  *
  * @author <a href="https://github.com/ForteScarlet"> ForteScarlet </a>
  */
@@ -97,7 +95,7 @@ public interface Configuration {
      * @param key 配置键。
      * @return 是否存在。
      */
-    boolean containsKey(String key);
+    boolean containsConfig(String key);
 
 
     /**
@@ -115,32 +113,6 @@ public interface Configuration {
     default boolean isEmpty() {
         return size() == 0;
     }
-
-
-    // 不应能够获取所有。
-    // /**
-    //  * 获取所有的配置信息。
-    //  * @return config list.
-    //  */
-    // Collection<ConfigurationProperty> getConfigProperties();
-
-
-    // 不应能够获取所有。
-    // /**
-    //  * 根据筛选条件获取所有的配置信息。
-    //  *
-    //  * @param testPredicate 筛选条件。
-    //  * @return config list.
-    //  */
-    // Collection<ConfigurationProperty> getConfigProperties(Predicate<ConfigurationProperty> testPredicate);
-
-
-    // 不应能够获取所有。
-    // /**
-    //  * 遍历所有的配置信息。
-    //  * @param forEachConsumer consumer.
-    //  */
-    // void forEach(BiConsumer<? super String, ? super ConfigurationProperty> forEachConsumer);
 
 
 

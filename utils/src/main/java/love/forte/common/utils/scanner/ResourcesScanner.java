@@ -66,21 +66,13 @@ public class ResourcesScanner implements Scanner<String, URI> {
      */
     @Override
     public ResourcesScanner scan(String path, Predicate<URI> classFilter) {
+        if (path == null || path.length() == 0) {
+            path = "." + File.separator;
+        }
         eleStrategySet.addAll(addFile(path, classFilter));
         return this;
     }
 
-    /**
-     * 根据过滤规则查询, 查询全部
-     */
-    @Override
-    public ResourcesScanner scan(String path) {
-        if (path == null || path.length() == 0) {
-            path = "." + File.separator;
-        }
-        eleStrategySet.addAll(addFile(path, c -> true));
-        return this;
-    }
 
     /**
      * 获取包下所有
@@ -91,7 +83,7 @@ public class ResourcesScanner implements Scanner<String, URI> {
         URL url = classLoader.getResource(path);
         //如果路径为null，抛出异常
         if (url == null) {
-            throw new RuntimeException("资源路径不存在: " + path);
+            throw new RuntimeException("Resource path does not exist: " + path);
         }
 
 
@@ -108,7 +100,7 @@ public class ResourcesScanner implements Scanner<String, URI> {
                 return findJar(path, filter);
             }
         }catch (Exception e){
-            throw new RuntimeException("无法扫描路径: " + path, e);
+            throw new RuntimeException("Unable to scan path: " + path, e);
         }
         return Collections.emptySet();
     }
@@ -122,7 +114,7 @@ public class ResourcesScanner implements Scanner<String, URI> {
         try {
             uri = classLoader.getResource(path).toURI();
         } catch (NullPointerException | URISyntaxException e) {
-            throw new RuntimeException("未找到File资源: " + path, e);
+            throw new RuntimeException("File resource not found: " + path, e);
         }
         File file = new File(uri);
         if (file.isDirectory()) {
@@ -159,7 +151,7 @@ public class ResourcesScanner implements Scanner<String, URI> {
             JarURLConnection jarURLConnection = (JarURLConnection) url.openConnection();
             jarFile = jarURLConnection.getJarFile();
         } catch (NullPointerException | IOException e) {
-            throw new RuntimeException("未找到Jar资源: " + path, e);
+            throw new RuntimeException("Jar resource not found: " + path, e);
         }
 
         // 遍历

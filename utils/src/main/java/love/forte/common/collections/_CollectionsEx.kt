@@ -119,8 +119,21 @@ public fun <T> concurrentSortedQueueOf(comparator: Comparator<T>): Queue<T> = Co
 public fun <T> concurrentSortedQueueOf(vararg elements: T): Queue<T> = ConcurrentSortedQueue(*elements)
 
 
+/**
+ * an empty iterator.
+ */
+public fun <T> emptyIterator(): Iterator<T> = EmptyIterator
+
+// /**
+//  * an empty iterator.
+//  */
+// public fun <T> emptyIterator(@Suppress("UNUSED_PARAMETER") type: Class<T>): Iterator<T> = EmptyIterator
 
 
+/**
+ * Iter plus.
+ */
+public operator fun <T> Iterator<T>.plus(other: Iterator<T>): Iterator<T> = MergedIterator(this, other)
 
 
 

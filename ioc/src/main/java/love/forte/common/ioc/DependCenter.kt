@@ -16,7 +16,7 @@ import love.forte.common.annotation.Ignore
 import love.forte.common.configuration.Configuration
 import love.forte.common.configuration.ConfigurationInjector
 import love.forte.common.configuration.annotation.AsConfig
-import love.forte.common.configuration.impl.MapConfiguration
+import love.forte.common.configuration.impl.LinkedMapConfiguration
 import love.forte.common.ioc.annotation.Beans
 import love.forte.common.ioc.annotation.Constr
 import love.forte.common.ioc.annotation.Depend
@@ -26,18 +26,15 @@ import love.forte.common.utils.FieldUtil
 import love.forte.common.utils.annotation.AnnotationUtil
 import love.forte.common.utils.convert.ConverterManager
 import java.io.Closeable
-import java.lang.IllegalStateException
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
+import java.lang.reflect.Parameter
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiFunction
 import java.util.function.Function
-import java.util.function.Supplier
-import kotlin.NoSuchElementException
 import kotlin.reflect.KMutableProperty
-import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.javaSetter
 import kotlin.reflect.jvm.kotlinProperty
 
@@ -52,7 +49,7 @@ import kotlin.reflect.jvm.kotlinProperty
  * @param singletonMap 保存单例的map。在put的时候会有同步锁，所以应该不需要线程安全的Map.
  * @param nameResourceWarehouse 保存依赖的map。以name为key, 对应着唯一的值，也是其他sourceWarehouse中最终指向的地方。
  * @param parent 依赖中心的父类依赖。可以通过 [mergeParent] 来指定一个新的 parent.
- * @param configuration 可以提供一个configuration来实现自动配置注入。默认为一个空的 [MapConfiguration]。不可为null。
+ * @param configuration 可以提供一个configuration来实现自动配置注入。默认为一个空的 [LinkedMapConfiguration]。不可为null。
  */
 public class DependCenter
 @JvmOverloads
@@ -61,7 +58,7 @@ constructor(
     private val nameResourceWarehouse: MutableMap<String, BeanDepend<*>> = ConcurrentHashMap<String, BeanDepend<*>>(),
     @Volatile
     private var parent: DependBeanFactory? = null,
-    var configuration: Configuration = MapConfiguration() // auto config able.
+    var configuration: Configuration = LinkedMapConfiguration() // auto config able.
 ) : BeanDependRegistry, DependBeanFactory, Closeable {
 
 
@@ -125,7 +122,7 @@ constructor(
     }
 
     /**
-     * 类型最终值。获取一个类型，先优先尝试使用此处，获取不到则去 [typeResourceWarehouse] 中寻找并固定于此处。
+     * 类型最终值。获取一个类型，先优先尝试使用此处。
      * value是可null类型，但是只适用于 [ConcurrentHashMap.computeIfAbsent]
      */
     private val finalTypeResourceWarehouse: MutableMap<Class<*>, String?> = ConcurrentHashMap<Class<*>, String?>()
@@ -133,8 +130,13 @@ constructor(
     /**
      * 根据旧parent得到一个新的parent
      */
-    public fun mergeParent(merge: (DependBeanFactory?) -> DependBeanFactory?) {
-        parent = merge(parent)
+    @Synchronized
+    public fun mergeParent(merger: (DependBeanFactory?) -> DependBeanFactory?) {
+        parent = merger(parent)
+    }
+
+    public fun mergeConfig(merger: (Configuration) -> Configuration) {
+        configuration = merger(configuration)
     }
 
     /**
@@ -427,18 +429,26 @@ constructor(
         // 参数实例获取函数
         val parameters = method.parameters
         val parameterSupplierList: List<(DependBeanFactory) -> Any?> =
-            parameters.map {
+            parameters.mapIndexed { i, p ->
                 // depend annotation.
-                val depend: Depend? = AnnotationUtil.getAnnotation(it, Depend::class.java)
+                val depend: Depend? = AnnotationUtil.getAnnotation(p, Depend::class.java)
                 val orIgnore: Boolean = depend?.orIgnore ?: false
 
+
                 if (depend == null) {
-                    val paramType = it.type
-                    // no depend annotation. by type.
-                    // println("")
+                    val paramType = p.type
 
                     { d ->
-                        d.getOrThrow(paramType) { e -> NoSuchDependException("${e.localizedMessage} in-> $method($it)") }
+                        d.getOrThrow(paramType) { e ->
+                            NoSuchDependException(
+                                """
+                                |${e.localizedMessage}
+                                |class:     ${method.declaringClass.toGenericString()}
+                                |method:    ${method.toSimpleString()}
+                                |parameter: ${p.toSimpleString(i)}
+                            """.trimMargin()
+                            )
+                        }
                     }
                 } else {
                     // depend.
@@ -446,11 +456,22 @@ constructor(
                     if (dependValue.isBlank()) {
                         // blank, use type.
                         val dependType: Class<*> =
-                            depend.type.let { t -> if (t == Void::class) null else t.java } ?: it.type
+                            depend.type.let { t -> if (t == Void::class) null else t.java } ?: p.type
                         if (orIgnore) {
                             { d -> d.getOrNull(dependType) }
                         } else {
-                            { d -> d[dependType] }
+                            { d ->
+                                d.getOrThrow(dependType) { e ->
+                                    NoSuchDependException(
+                                        """
+                                        |${e.localizedMessage}
+                                        |class:     ${method.declaringClass.toGenericString()}
+                                        |method:    ${method.toSimpleString()}
+                                        |parameter: ${p.toSimpleString(i)}
+                                    """.trimMargin()
+                                    )
+                                }
+                            }
                         }
                     } else {
                         // not blank, use name.
@@ -458,7 +479,19 @@ constructor(
                         if (orIgnore) {
                             { d -> d.getOrNull(name) }
                         } else {
-                            { d -> d[name] }
+                            { d ->
+                                d.getOrThrow(name) { e ->
+                                    NoSuchDependException(
+                                        """
+                                        |${e.localizedMessage}
+                                        |class:     ${method.declaringClass.toGenericString()}
+                                        |method:    ${method.toSimpleString()}
+                                        |parameter: ${p.toSimpleString(i)}
+                                    """.trimMargin()
+                                    )
+                                }
+
+                            }
                         }
                     }
                 }
@@ -467,7 +500,15 @@ constructor(
 
         return { factory ->
             // parent instance
-            val parentInstance: Any = factory[parentName]
+            val parentInstance: Any = factory.getOrThrow(parentName) { e ->
+                NoSuchDependException(
+                    """
+                    |Unable to get parent instance for injection method: ${e.localizedMessage}
+                    |parent name: $parentName
+                    |inject fun : ${method.toSimpleString()}
+                """.trimMargin()
+                )
+            }
             // params
             val params = parameterSupplierList.map { sup -> sup(factory) }
             method(parentInstance, *params.toTypedArray())
@@ -512,7 +553,7 @@ constructor(
                 // do inject if can
                 val dependAnnotation: Depend = AnnotationUtil.getAnnotation(it, Depend::class.java) ?: beans.depend
 
-                val orNull: Boolean = dependAnnotation.orIgnore
+                val orIgnore: Boolean = dependAnnotation.orIgnore
 
                 val dependName: String = dependAnnotation.value
 
@@ -525,31 +566,54 @@ constructor(
                     } else {
                         it.type
                     }
-                    if (orNull) { d ->
+                    if (orIgnore) { d ->
                         d.getOrNull(needType)
                     } else { d ->
-                        d.get(needType)
+                        d.getOrThrow(needType) { e ->
+                            InjectionFailedException(
+                                "depend($type) Injection failed for inject depend type $needType: ${e.localizedMessage}",
+                                e
+                            )
+                        }
                     }
                 } else {
-                    if (orNull) { d ->
+                    if (orIgnore) { d ->
                         d.getOrNull(dependName)
                     } else { d ->
-                        d.get(dependName)
+                        d.getOrThrow(dependName) { e ->
+                            InjectionFailedException(
+                                "depend($type) Injection failed for inject depend named $dependName: ${e.localizedMessage}",
+                                e
+                            )
+                        }
                     }
                 }
 
 
                 // 通过field进行赋值
-                fun byField(): (T, Any?) -> Unit = { b, v -> v?.apply { it.set(b, this) } }
+                fun byField(): (T, Any?) -> Unit = { b, v ->
+                    v?.runCatching { it.set(b, this) }?.getOrElse { e ->
+                        throw InjectionFailedException("field $it by $b for $v", e)
+                    }
+                }
+
 
                 // 尝试通过setter赋值
                 fun bySetter(): ((T, Any?) -> Unit)? {
                     val setterName: String = dependAnnotation.setterName
-                    val paramsType: Class<*> =
-                        dependAnnotation.setterParams.java.let { sp -> if (sp == Void::class.java) null else sp }
-                            ?: it.type
+
+
+                    // by setter name.
                     if (setterName.isNotBlank()) {
-                        val setter: Method = type.getMethod(setterName, paramsType)
+                        val paramsType: Class<*> =
+                            dependAnnotation.setterParams.java.takeIf { sp -> sp != Void::class.java } ?: it.type
+
+                        val setter: Method = type.runCatching {
+                            getMethod(setterName, paramsType)
+                        }.getOrElse { e ->
+                            throw IllegalStateException("Cannot find the setter method of ${type}: $setterName(${paramsType})", e);
+                        }
+
                         return { b, v -> v?.apply { setter(b, this) } }
                     } else {
                         val ktProp: KMutableProperty<*> = it.kotlinProperty?.let { kp ->
@@ -861,7 +925,7 @@ constructor(
      */
     override fun <T : Any?> getOrThrow(
         type: Class<T>,
-        exceptionCompute: Function<NoSuchDependException, NoSuchDependException>
+        exceptionCompute: Function<NoSuchDependException, DependException>
     ): T {
         var parentEx: Exception? = null
         val parentValue: T? = try {
@@ -882,7 +946,7 @@ constructor(
     override fun <T : Any?> getOrThrow(
         type: Class<T>,
         name: String,
-        exceptionCompute: Function<NoSuchDependException, NoSuchDependException>
+        exceptionCompute: Function<NoSuchDependException, DependException>
     ): T = getOrThrow(name, exceptionCompute) as T
 
     /**
@@ -890,7 +954,7 @@ constructor(
      */
     override fun getOrThrow(
         name: String,
-        exceptionCompute: Function<NoSuchDependException, NoSuchDependException>
+        exceptionCompute: Function<NoSuchDependException, DependException>
     ): Any {
         var parentEx: Exception? = null
         val parentValue: Any? = try {
@@ -1008,6 +1072,35 @@ internal val Method.dependName: String
         }
 
     }
+
+
+internal fun Method.toSimpleString(): String {
+    val mod = this.modifiers
+    return StringBuilder().append(
+        when {
+            Modifier.isPublic(mod) -> "public "
+            Modifier.isPrivate(mod) -> "private "
+            Modifier.isProtected(mod) -> "protected "
+            else -> "default "
+        }
+    ).apply {
+        if (Modifier.isFinal(mod)) {
+            append("final ")
+        }
+    }.append(returnType.simpleName).append(" ")
+        .append(name).also { sb ->
+            parameters.joinTo(sb, ", ", "(", ")") {
+                it.type.simpleName
+            }
+        }.toString()
+}
+
+
+internal fun Parameter.toSimpleString(index: Int = -1): String {
+    return StringBuilder().also { sb ->
+        if (index >= 0) sb.append(index).append(":")
+    }.append(name).append(" ").append(type.simpleName).toString()
+}
 
 
 // internal fun <T> DependBeanFactory.getOrThrow(type: Class<T>, from: String): T =

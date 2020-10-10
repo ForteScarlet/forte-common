@@ -68,14 +68,14 @@ public class ClassesScanner implements Scanner<String, Class<?>> {
         return this;
     }
 
-    /**
-     * 根据过滤规则查询, 查询全部
-     */
-    @Override
-    public ClassesScanner scan(String packageName) {
-        eleStrategySet.addAll(addClass(packageName, c -> true));
-        return this;
-    }
+    // /**
+    //  * 根据过滤规则查询, 查询全部
+    //  */
+    // @Override
+    // public ClassesScanner scan(String packageName) {
+    //     eleStrategySet.addAll(addClass(packageName, c -> true));
+    //     return this;
+    // }
 
     /**
      * 获取包下所有实现了superStrategy的类并加入list

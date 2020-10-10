@@ -85,7 +85,7 @@ public class LinkedConfigurationParserManager extends ReaderConfigurationParserM
     protected Configuration createConfiguration(Map<String, Object> configMap) {
         Map<String, ConfigurationProperty> propMap = new HashMap<>(configMap.size());
         configMap.forEach((k, v) -> propMap.put(k, new ConverterConfigurationProperty(k, v, converterManager)));
-        return new MapConfiguration(propMap);
+        return new LinkedMapConfiguration(propMap);
     }
 
 

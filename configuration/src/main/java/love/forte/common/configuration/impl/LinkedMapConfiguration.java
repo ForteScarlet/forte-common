@@ -14,6 +14,7 @@ package love.forte.common.configuration.impl;
 
 import love.forte.common.configuration.Configuration;
 import love.forte.common.configuration.ConfigurationProperty;
+import love.forte.common.configuration.MapConfiguration;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -21,26 +22,29 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- *
  * 基于 HashMap的 {@link Configuration} 基础实现类
  *
  * @author <a href="https://github.com/ForteScarlet"> ForteScarlet </a>
  */
-public class MapConfiguration extends LinkedHashMap<String, ConfigurationProperty> implements Configuration {
+public class LinkedMapConfiguration extends LinkedHashMap<String, ConfigurationProperty> implements MapConfiguration {
     private static final long serialVersionUID = -6358293354735674011L;
 
-    public MapConfiguration(int initialCapacity, float loadFactor) {
+    public LinkedMapConfiguration(int initialCapacity, float loadFactor) {
         super(initialCapacity, loadFactor);
     }
-    public MapConfiguration(int initialCapacity) {
+
+    public LinkedMapConfiguration(int initialCapacity) {
         super(initialCapacity);
     }
-    public MapConfiguration() {
+
+    public LinkedMapConfiguration() {
     }
-    public MapConfiguration(Map<? extends String, ? extends ConfigurationProperty> m) {
+
+    public LinkedMapConfiguration(Map<? extends String, ? extends ConfigurationProperty> m) {
         super(m);
     }
-    public MapConfiguration(int initialCapacity, float loadFactor, boolean accessOrder) {
+
+    public LinkedMapConfiguration(int initialCapacity, float loadFactor, boolean accessOrder) {
         super(initialCapacity, loadFactor, accessOrder);
     }
 
@@ -61,16 +65,16 @@ public class MapConfiguration extends LinkedHashMap<String, ConfigurationPropert
      * 将 `aaa.bbb.ccc-ddd` 的格式转化为 `aaa.bbb.cccDdd`
      */
     private String resetKey(String key) {
-        if(key.contains("-")) {
+        if (key.contains("-")) {
             final String[] split = key.split("-");
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < split.length; i++) {
                 String s = split[i];
-                if(i == 0){
+                if (i == 0) {
                     sb.append(s);
                 } else {
                     char first = s.charAt(0);
-                    if(Character.isLowerCase(first)){
+                    if (Character.isLowerCase(first)) {
                         first = Character.toUpperCase(first);
                     }
                     sb.append(first).append(s.substring(1));
@@ -118,8 +122,8 @@ public class MapConfiguration extends LinkedHashMap<String, ConfigurationPropert
      * @return 是否存在。
      */
     @Override
-    public boolean containsKey(String key) {
-        return containsKey((Object) key);
+    public boolean containsConfig(String key) {
+        return containsKey(key);
     }
 
     /**
@@ -138,10 +142,10 @@ public class MapConfiguration extends LinkedHashMap<String, ConfigurationPropert
      * @return config list.
      */
     public Collection<ConfigurationProperty> getConfigProperties(Predicate<ConfigurationProperty> testPredicate) {
-        List<ConfigurationProperty> list =new ArrayList<>();
+        List<ConfigurationProperty> list = new ArrayList<>();
         final Collection<ConfigurationProperty> values = values();
         for (ConfigurationProperty value : values) {
-            if(testPredicate.test(value)){
+            if (testPredicate.test(value)) {
                 list.add(value);
             }
         }
@@ -197,6 +201,12 @@ public class MapConfiguration extends LinkedHashMap<String, ConfigurationPropert
     public ConfigurationProperty put(String key, ConfigurationProperty value) {
         return super.put(resetKey(key), value);
     }
+
+    @Override
+    public void putAll(Map<? extends String, ? extends ConfigurationProperty> m) {
+        m.forEach((k, v) -> put(resetKey(k), v));
+    }
+
 
     @Override
     public ConfigurationProperty putIfAbsent(String key, ConfigurationProperty value) {

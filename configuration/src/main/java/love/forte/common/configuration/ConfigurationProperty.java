@@ -24,6 +24,9 @@ import java.lang.reflect.Type;
  *
  * 在实现的时候记得不要忘记实现 {@link #equals(Object)}、{@link #hashCode()}、{@link #hashCode()}
  *
+ * @see love.forte.common.configuration.impl.ConverterConfigurationProperty
+ * @see love.forte.common.configuration.impl.NullConfigurationProperty
+ *
  * @author <a href="https://github.com/ForteScarlet"> ForteScarlet </a>
  */
 public interface ConfigurationProperty {
