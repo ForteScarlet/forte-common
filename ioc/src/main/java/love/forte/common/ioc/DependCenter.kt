@@ -522,20 +522,23 @@ constructor(
      */
     private fun <T> instanceInjectFunc(beans: Beans, type: Class<out T>): (T, DependBeanFactory) -> T {
         val depends: MutableList<Field> = FieldUtil.getDeclaredFields(type, {
-            // 字段不可以是静态的、不可以是final的
-            val modifiers: Int = it.modifiers
-            if (Modifier.isFinal(modifiers)) {
-                throw IllegalTypeException("@Depend cannot be annotated in final field. but annotated in $it from $type")
-            }
-            if (Modifier.isStatic(modifiers)) {
-                throw IllegalTypeException("@Depend cannot be annotated in static field. but annotated in $it from $type")
-            }
             if (beans.allDepend) {
                 // 全部都注入, 则忽略部分需要忽略的
                 !AnnotationUtil.containsAnnotation(it, Ignore::class.java)
             } else {
                 // 否则, 注入需要注入的
                 AnnotationUtil.containsAnnotation(it, Depend::class.java)
+            }.apply {
+                if (this) {
+                    // 字段不可以是静态的、不可以是final的
+                    val modifiers: Int = it.modifiers
+                    if (Modifier.isFinal(modifiers)) {
+                        throw IllegalTypeException("@Depend cannot be annotated in final field. but annotated in $it from $type")
+                    }
+                    if (Modifier.isStatic(modifiers)) {
+                        throw IllegalTypeException("@Depend cannot be annotated in static field. but annotated in $it from $type")
+                    }
+                }
             }
         }, true)
 
@@ -611,7 +614,10 @@ constructor(
                         val setter: Method = type.runCatching {
                             getMethod(setterName, paramsType)
                         }.getOrElse { e ->
-                            throw IllegalStateException("Cannot find the setter method of ${type}: $setterName(${paramsType})", e);
+                            throw IllegalStateException(
+                                "Cannot find the setter method of ${type}: $setterName(${paramsType})",
+                                e
+                            );
                         }
 
                         return { b, v -> v?.apply { setter(b, this) } }

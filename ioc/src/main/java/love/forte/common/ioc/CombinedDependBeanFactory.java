@@ -12,6 +12,7 @@
 
 package love.forte.common.ioc;
 
+import love.forte.common.ioc.exception.DependException;
 import love.forte.common.ioc.exception.NoSuchDependException;
 
 import java.util.Set;
@@ -104,7 +105,7 @@ public class CombinedDependBeanFactory implements DependBeanFactory {
      * @return 实例
      */
     @Override
-    public <T> T getOrThrow(Class<T> type, Function<NoSuchDependException, NoSuchDependException> exceptionCompute) {
+    public <T> T getOrThrow(Class<T> type, Function<NoSuchDependException, DependException> exceptionCompute) {
         return null;
     }
 
@@ -117,7 +118,7 @@ public class CombinedDependBeanFactory implements DependBeanFactory {
      * @return 转化后的实例
      */
     @Override
-    public <T> T getOrThrow(Class<T> type, String name, Function<NoSuchDependException, NoSuchDependException> exceptionCompute) {
+    public <T> T getOrThrow(Class<T> type, String name, Function<NoSuchDependException, DependException> exceptionCompute) {
         return null;
     }
 
@@ -129,7 +130,7 @@ public class CombinedDependBeanFactory implements DependBeanFactory {
      * @return 实例
      */
     @Override
-    public Object getOrThrow(String name, Function<NoSuchDependException, NoSuchDependException> exceptionCompute) {
+    public Object getOrThrow(String name, Function<NoSuchDependException, DependException> exceptionCompute) {
         return null;
     }
 

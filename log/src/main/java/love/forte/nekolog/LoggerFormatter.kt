@@ -10,6 +10,8 @@
  * QQ     1149159218
  */
 
+@file:JvmName("NekoLoggers")
+
 package love.forte.nekolog
 
 import love.forte.nekolog.color.ColorBuilder
@@ -19,6 +21,17 @@ import org.slf4j.event.Level
 import java.time.LocalDateTime
 
 
+public fun interface LoggerNameReset {
+    fun resetLogName(name: String)
+}
+
+internal operator fun LoggerNameReset.invoke(name: String) { this.resetLogName(name) }
+
+
+internal val LoggerNameNotSet = LoggerNameReset {  }
+
+
+
 /**
  *
  * @author ForteScarlet -> https://github.com/ForteScarlet
@@ -26,8 +39,13 @@ import java.time.LocalDateTime
 public interface LoggerFormatter {
     /**
      * 对输出的日志文本进行格式化。
+     *
+     * @param loggerNameReset 可以对logger的name进行重命名以降低名称计算压力。
      */
-    fun format(info: FormatterInfo): String
+    fun format(info: FormatterInfo, loggerNameReset: LoggerNameReset): String
+
+    @JvmDefault
+    fun format(info: FormatterInfo): String = format(info, LoggerNameNotSet)
 
     /**
      * 只得到格式化的正文文本。
@@ -84,10 +102,11 @@ constructor(
 
 public abstract class BaseLoggerFormatter(private val textFormat: (String?, Array<out Any?>) -> String) :
     LoggerFormatter {
+
     /**
      * 对输出的日志文本进行格式化。
      */
-    override fun format(info: FormatterInfo): String {
+    override fun format(info: FormatterInfo, loggerNameReset: LoggerNameReset): String {
         val builder = info.colorBuilder
         // [time][threadName] [level] stackTrace : msg
 
@@ -107,7 +126,11 @@ public abstract class BaseLoggerFormatter(private val textFormat: (String?, Arra
             builder.add("[", this.name.text, "] ")
         }
         info.name?.apply {
-            builder.append(this).append(' ')
+            val logName: String = this.toLogName()
+            if (logName.length != this.length) {
+                loggerNameReset(logName)
+            }
+            builder.append(logName).append(' ')
         }
         info.stackTrace?.apply {
             if (info.name != null) {
@@ -144,21 +167,33 @@ private const val lengthThreshold = 60
 internal fun StackTraceElement.show(name: String? = null): String {
     return this.toString().let {
         if (name != null && it.startsWith(name)) {
-            it.substring(name.length)
+            when {
+                name == it -> ""
+                it[name.length] == '.' -> it.substring(name.length + 1)
+                else -> it.substring(name.length)
+            }
         } else if (it.length < lengthThreshold) {
             it
         } else {
             val sb = StringBuilder(lengthThreshold)
-            val split: List<String> = className.split(".")
-            split.forEachIndexed { index, s ->
-                if(index == 0) {
-                    sb.append(s).append('.')
-                } else if (index < split.lastIndex) {
-                    sb.append(s.firstOrNull().toString()).append('.')
-                } else sb.append(s)
-            }
+            className.toSplitSimpleString(sb)
             sb.append('(').append(fileName).append(':').append(lineNumber).append(')')
             sb.toString()
+        }
+    }
+}
+
+internal fun <B : Appendable> String.toSplitSimpleString(buffer: B) {
+    val split: List<String> = split(".")
+    split.forEachIndexed { index, s ->
+        when {
+            index == 0 -> {
+                buffer.append(s).append('.')
+            }
+            index < split.lastIndex -> {
+                buffer.append(s.firstOrNull().toString()).append('.')
+            }
+            else -> buffer.append(s)
         }
     }
 }
@@ -193,3 +228,60 @@ private val String.text: String
             }
         }
     }
+
+
+private const val MAX_LENGTH = 45
+
+@Volatile
+private var maxLength: Int = 30
+    set(value) {
+        field = if (value < MAX_LENGTH) {
+            value
+        } else {
+            MAX_LENGTH
+        }
+    }
+
+internal fun resetMaxLength(length: Int): Int {
+    if (maxLength >= MAX_LENGTH) {
+        return maxLength
+    }
+
+    if (length in maxLength + 1 until MAX_LENGTH) {
+        maxLength = length
+    }
+
+    return maxLength
+}
+
+
+internal fun String.toLogName(): String {
+    return this.filling(resetMaxLength(this.length))
+}
+
+
+/**
+ * 如果填充到的长度小于string,
+ */
+internal fun String.filling(fillingLength: Int, reFill: Boolean = true): String {
+    return when {
+        length == fillingLength -> this
+        length > fillingLength -> StringBuilder().apply { this@filling.toSplitSimpleString(this) }.toString().let {
+            if (reFill) it.filling(fillingLength, false)
+            else it
+        }
+        else -> {
+            val leftover = fillingLength - length
+            val charArray = CharArray(fillingLength) { i ->
+                if (i < leftover) ' '
+                else this[length - (fillingLength - i)]
+            }
+            String(charArray)
+        }
+    }
+
+}
+
+
+
+

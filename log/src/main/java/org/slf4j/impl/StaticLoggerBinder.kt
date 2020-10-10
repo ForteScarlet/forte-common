@@ -68,15 +68,15 @@ object StaticLoggerBinder {
                 if(!love.forte.common.language.Language.isInitialized()) {
                     love.forte.common.language.Language.init()
                 }
-                LanguageNekoLoggerFactory(colorBuilderFactory, level)
+                LanguageNekoLoggerFactory(colorBuilderFactory, level, configuration)
             }catch (ignore: Exception){
                 System.err.println("cannot found class 'love.forte.common.language.Language'. cannot enable language.")
                 // no Language.
-                NoLanguageNekoLoggerFactory(colorBuilderFactory, level)
+                NoLanguageNekoLoggerFactory(colorBuilderFactory, level, configuration)
             }
         } else {
             // no language.
-            NoLanguageNekoLoggerFactory(colorBuilderFactory, level)
+            NoLanguageNekoLoggerFactory(colorBuilderFactory, level, configuration)
         }
     }
 

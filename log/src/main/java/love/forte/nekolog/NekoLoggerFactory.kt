@@ -24,23 +24,41 @@ import org.slf4j.event.Level
 public interface NekoLoggerFactory : ILoggerFactory
 
 
+public abstract class BaseNekoLoggerFactory(
+    private val colorBuilderFactory: ColorBuilderFactory,
+    private val level: Int,
+    private val config: NekoLogConfiguration
+) : NekoLoggerFactory {
+    constructor(colorBuilderFactory: ColorBuilderFactory, level: Level, config: NekoLogConfiguration) :
+            this(
+                colorBuilderFactory,
+                level.toInt(),
+                config
+            )
 
-
-public abstract class BaseNekoLoggerFactory(private val colorBuilderFactory: ColorBuilderFactory, private val level: Int) : NekoLoggerFactory {
-    constructor(colorBuilderFactory: ColorBuilderFactory, level: Level): this(colorBuilderFactory, level.toInt())
     abstract val loggerFormatter: LoggerFormatter
     override fun getLogger(name: String?): Logger {
-        return NekoLogger(name ?: "neko", colorBuilderFactory, level, loggerFormatter)
+        return NekoLogger(name ?: "neko", colorBuilderFactory, level, loggerFormatter, config)
     }
 }
 
 
-public class LanguageNekoLoggerFactory(colorBuilderFactory: ColorBuilderFactory, level: Level) : BaseNekoLoggerFactory(colorBuilderFactory, level) {
+public class LanguageNekoLoggerFactory(
+    colorBuilderFactory: ColorBuilderFactory,
+    level: Level,
+    config: NekoLogConfiguration
+) :
+    BaseNekoLoggerFactory(colorBuilderFactory, level, config) {
     override val loggerFormatter: LoggerFormatter = LanguageLoggerFormatter
 }
 
 
-public class NoLanguageNekoLoggerFactory(colorBuilderFactory: ColorBuilderFactory, level: Level) : BaseNekoLoggerFactory(colorBuilderFactory, level) {
+public class NoLanguageNekoLoggerFactory(
+    colorBuilderFactory: ColorBuilderFactory,
+    level: Level,
+    config: NekoLogConfiguration
+) :
+    BaseNekoLoggerFactory(colorBuilderFactory, level, config) {
     override val loggerFormatter: LoggerFormatter = NoLanguageLoggerFormatter
 }
 

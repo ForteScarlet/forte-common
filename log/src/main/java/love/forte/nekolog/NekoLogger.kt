@@ -21,12 +21,15 @@ import java.io.PrintStream
  * 将不会对带有Marker的进行实现。
  */
 open class NekoLogger(
-    private val logName: String,
+    @Volatile
+    private var logName: String,
     private val colorBuilderFactory: ColorBuilderFactory,
     private val level: Int,
-    private val msgFormatter: LoggerFormatter
+    private val msgFormatter: LoggerFormatter,
+    config: NekoLogConfiguration
 ) : MarkerIgnoringBase() {
 
+    protected open val stackable: Boolean = config.enableStack
 
     protected open val tracePrint: PrintStream = System.out
     protected open val debugPrint: PrintStream = System.out
@@ -50,10 +53,10 @@ open class NekoLogger(
 
     private fun log(msg: String?, level: Level, printStream: PrintStream, err: Throwable?, vararg args: Any?) {
         val th: Thread = Thread.currentThread()
-        val stack: StackTraceElement = th.stackTrace[3]
+        val stack: StackTraceElement? = if (stackable) th.stackTrace[3] else null
         if (isEnable(level)) {
             val formatInfo = FormatterInfo(msg, level, logName, th, stack, colorBuilderFactory.getColorBuilder(), args)
-            printStream.println(msgFormatter.format(formatInfo))
+            printStream.println(msgFormatter.format(formatInfo) { logName = it })
             err?.printStackTrace(printStream)
         }
     }
