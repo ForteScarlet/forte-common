@@ -19,6 +19,7 @@ package love.forte.common.ioc
  *
  * @author ForteScarlet -> https://github.com/ForteScarlet
  */
+@Deprecated("unused")
 public interface BeanDependInitializing {
 
     /**

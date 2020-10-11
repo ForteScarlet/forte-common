@@ -17,6 +17,7 @@ import java.io.Closeable
 /**
  * close, 当Depend被close的时候会执行此函数.
  */
+@Deprecated("unused")
 public interface CloseProcesses : Closeable {
 
     /**
