@@ -121,6 +121,9 @@ object ConfigurationInjector {
 }
 
 
+private object Ignore
+
+
 private data class InjectCallable<out T>(
     private val configTarget: ConfigTarget<T>,
     private val configData: AsConfigData,
@@ -169,6 +172,9 @@ private data class InjectCallable<out T>(
             configInjectData.orNull -> {
                 null
             }
+            configInjectData.orIgnore -> {
+                Ignore
+            }
             else -> {
                 val javaTypeShow: String = when (configTarget.member) {
                     is KFunction -> configTarget.member.javaMethod?.toString() ?: configTarget.member.toString()
@@ -179,7 +185,9 @@ private data class InjectCallable<out T>(
                 throw ConfigurationInjectException("cannot found config '$configKey' for $javaTypeShow")
             }
         }
-        configTarget.setValue(target, value)
+        if (value !== Ignore) {
+            configTarget.setValue(target, value)
+        }
     }
 
     override fun toString(): String {
@@ -258,6 +266,11 @@ private inline class ConfigInjectData(val configInject: ConfigInject?) {
      * 如果找不到对应的配置，则注入null。默认会抛出异常。
      */
     val orNull: Boolean get() = configInject?.orNull ?: false
+
+    /**
+     * 如果找不到对应的配置，则注入null。默认会抛出异常。
+     */
+    val orIgnore: Boolean get() = configInject?.orIgnore ?: false
 }
 
 

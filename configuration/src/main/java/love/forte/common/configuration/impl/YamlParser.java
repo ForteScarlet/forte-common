@@ -17,6 +17,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.Reader;
 import java.util.AbstractMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BinaryOperator;
@@ -60,6 +61,7 @@ public class YamlParser extends ReaderConfigurationParser {
 
         return map.entrySet().stream()
                 .flatMap(e -> flatToEntry(null, e))
+                .filter(e -> e.getValue() != null)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                         throwingMerger(), LinkedHashMap::new));
     }

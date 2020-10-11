@@ -65,5 +65,11 @@ public @interface ConfigInject {
      */
     boolean orNull() default false;
 
+    /**
+     * 如果找不到对应的配置，且不存在默认值，则忽略。
+     * 只有到 {@link #orNull()} 为 false的时候才有效。
+     */
+    boolean orIgnore() default true;
+
 
 }

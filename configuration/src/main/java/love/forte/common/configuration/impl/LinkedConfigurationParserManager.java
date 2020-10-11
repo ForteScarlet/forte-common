@@ -84,7 +84,13 @@ public class LinkedConfigurationParserManager extends ReaderConfigurationParserM
     @Override
     protected Configuration createConfiguration(Map<String, Object> configMap) {
         Map<String, ConfigurationProperty> propMap = new HashMap<>(configMap.size());
-        configMap.forEach((k, v) -> propMap.put(k, new ConverterConfigurationProperty(k, v, converterManager)));
+        configMap.forEach((k, v) -> {
+            if(v == null) {
+                propMap.put(k, new NullConfigurationProperty(k));
+            } else {
+                propMap.put(k, new ConverterConfigurationProperty(k, v, converterManager));
+            }
+        });
         return new LinkedMapConfiguration(propMap);
     }
 
@@ -112,9 +118,14 @@ public class LinkedConfigurationParserManager extends ReaderConfigurationParserM
             // maybe throw ex
             StringBuilder sb = new StringBuilder("config parse failed.");
             if(!exs.isEmpty()){
-                sb.append("\nall exception message: \n");
+                sb.append("\nall exception: \n");
                 for (Exception ex : exs) {
-                    sb.append("> ").append(ex.getLocalizedMessage()).append("\n");
+                    final String exLocalizedMessage = ex.getLocalizedMessage();
+                    sb.append("> ").append(ex.toString());
+                    if(exLocalizedMessage != null){
+                        sb.append("\t").append(exLocalizedMessage);
+                    }
+                    sb.append("\n");
                 }
             }else{
                 sb.append(" cannot found any parser for type '").append(type).append("'.");

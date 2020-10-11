@@ -57,7 +57,7 @@ public interface LoggerFormatter {
 public data class FormatterInfo
 @JvmOverloads
 constructor(
-    val info: String? = null,
+    val msg: String? = null,
     val level: Level? = null,
     val name: String? = null,
     val thread: Thread? = null,
@@ -69,8 +69,8 @@ constructor(
 
     companion object {
         @JvmStatic
-        fun create(info: String, level: Level, vararg args: Any?): FormatterInfo =
-            FormatterInfo(info = info, level = level, args = args)
+        fun create(msg: String, level: Level, vararg args: Any?): FormatterInfo =
+            FormatterInfo(msg = msg, level = level, args = args)
     }
 
 
@@ -82,7 +82,7 @@ constructor(
 
         other as FormatterInfo
 
-        if (info != other.info) return false
+        if (msg != other.msg) return false
         if (level != other.level) return false
         if (colorBuilder != other.colorBuilder) return false
         if (!args.contentEquals(other.args)) return false
@@ -91,7 +91,7 @@ constructor(
     }
 
     override fun hashCode(): Int {
-        var result = info?.hashCode() ?: 0
+        var result = msg?.hashCode() ?: 0
         result = 31 * result + (level?.hashCode() ?: 0)
         result = 31 * result + (colorBuilder.hashCode())
         result = 31 * result + args.contentHashCode()
@@ -140,7 +140,7 @@ public abstract class BaseLoggerFormatter(private val textFormat: (String?, Arra
             builder.append(stackTraceText).append(' ')
         }
         builder.append(": ")
-        builder.add(color, textFormat(info.info, info.args))
+        builder.add(color, textFormat(info.msg, info.args))
         return builder.toString()
     }
 
@@ -233,7 +233,7 @@ private val String.text: String
 private const val MAX_LENGTH = 45
 
 @Volatile
-private var maxLength: Int = 30
+private var maxLength: Int = 15
     set(value) {
         field = if (value < MAX_LENGTH) {
             value
