@@ -59,6 +59,10 @@ public class YamlParser extends ReaderConfigurationParser {
         //noinspection unchecked
         final Map<String, Object> map = yaml.loadAs(reader, Map.class);
 
+        if (map == null) {
+            return new LinkedHashMap<>();
+        }
+
         return map.entrySet().stream()
                 .flatMap(e -> flatToEntry(null, e))
                 .filter(e -> e.getValue() != null)

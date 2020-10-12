@@ -40,6 +40,12 @@ public @interface AsConfig {
     boolean allField() default false;
 
     /**
+     * 如果 {@link #allField()} 为true，则此处为没有标记 {@link ConfigInject} 的字段所使用的注解值。
+     * @return
+     */
+    ConfigInject defaultFieldInject() default @ConfigInject;
+
+    /**
      * 进行深层注入，即会扫描父类的字段。
      * @return
      */

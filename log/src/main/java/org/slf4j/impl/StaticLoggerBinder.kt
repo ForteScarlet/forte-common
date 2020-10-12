@@ -40,9 +40,9 @@ object StaticLoggerBinder {
             val manager: ConfigurationParserManager = ConfigurationManagerRegistry.defaultManager()
             val config: Configuration = manager.parse(type, reader)
             // inject and return
-            ConfigurationInjector.inject(NekoLogConfiguration(), config)
+            ConfigurationInjector.inject(NekoLogConfiguration(), config, null)
         }catch (e: Throwable) {
-            System.err.println("cannot found config file. use default conafig.")
+            System.err.println("cannot found or use nekolog config file. use default config: ${e.localizedMessage}")
             NekoLogConfiguration()
         }
     }

@@ -132,7 +132,8 @@ private data class InjectCallable<out T>(
     /**
      * config inject data
      */
-    private val configInjectData: ConfigInjectData = getAnnotation(configTarget.member, ConfigInject::class).toData()
+    private val configInjectData: ConfigInjectData =
+        (getAnnotation(configTarget.member, ConfigInject::class) ?: configData.defaultFieldInject).toData()
 
     val prefix: String? get() = configData.prefix
     val suffix: String? get() = configData.suffix
@@ -220,6 +221,7 @@ private fun KVisibility?.isPublic(): Boolean = this?.let { it == KVisibility.PUB
 
 
 private fun AsConfig?.toData(): AsConfigData = AsConfigData(this)
+
 private fun ConfigInject?.toData(): ConfigInjectData = ConfigInjectData(this)
 
 
@@ -289,6 +291,9 @@ private inline class AsConfigData(val asConfig: AsConfig?) {
      * 则没有标记 [ConfigInject] 的字段也会被默认作为配置字段而添加。
      */
     val allField: Boolean get() = asConfig?.allField ?: false
+
+
+    val defaultFieldInject: ConfigInject? get() = asConfig?.defaultFieldInject
 
     /**
      * 进行深层注入，即会扫描父类的字段。 默认false
