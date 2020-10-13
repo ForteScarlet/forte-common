@@ -11,6 +11,7 @@
  */
 
 @file:Suppress("MemberVisibilityCanBePrivate", "unused", "RedundantVisibilityModifier")
+@file:JvmName("TimeInline")
 
 package love.forte.common.utils
 
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit
  * ```
  * 你也可以直接通过函数 [now] 来得到当前时间的 [Time] 值。
  */
-public inline class Time(val time: Long){
+public inline class Time(val time: Long) {
     private val unit: TimeUnit get() = TimeUnit.MILLISECONDS
     fun toNanos(): Long = unit.toNanos(time)
     fun toMicros(): Long = unit.toMicros(time)
@@ -40,6 +41,30 @@ public inline class Time(val time: Long){
     fun toDays(): Long = unit.toDays(time)
 }
 
+public sealed class TimeType
+public object Nanos : TimeType()
+public object Micros : TimeType()
+public object Millis : TimeType()
+public object Seconds : TimeType()
+public object Minutes : TimeType()
+public object Hours : TimeType()
+public object Days : TimeType()
+
+
+/**
+ * 将一个 [Time] 转化为一个指定的类型。
+ */
+public infix fun Time.timeAs(type: TimeType): Long {
+    return when (type) {
+        Nanos -> toNanos()
+        Micros -> toMicros()
+        Millis -> toMicros()
+        Seconds -> toSeconds()
+        Minutes -> toMinutes()
+        Hours -> toHours()
+        Days -> toDays()
+    }
+}
 
 /**
  * 将一个时间数值根据 [时间类型][timeUnit] 转化为一个内联时间类 [Time]
