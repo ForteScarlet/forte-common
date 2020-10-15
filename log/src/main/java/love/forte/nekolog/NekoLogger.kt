@@ -33,7 +33,7 @@ open class NekoLogger(
 ) : MarkerIgnoringBase() {
 
     protected open val stackable: Boolean = config.enableStack
-    protected open val threadAble: Boolean = config.enableStack
+    protected open val threadAble: Boolean = config.enableThread
 
     protected open val tracePrint: PrintStream = System.out
     protected open val debugPrint: PrintStream = System.out
@@ -56,8 +56,8 @@ open class NekoLogger(
     override fun getName(): String = logName
 
     private fun log(msg: String?, level: Level, printStream: PrintStream, err: Throwable?, vararg args: Any?) {
-        val th: Thread = Thread.currentThread()
-        val stack: StackTraceElement? = if (stackable) {
+        val th: Thread? = if (threadAble) Thread.currentThread() else null
+        val stack: StackTraceElement? = if (stackable && th != null) {
             val stackTraces = th.stackTrace
             if (stackTraces.lastIndex > 3) {
                 stackTraces[3]

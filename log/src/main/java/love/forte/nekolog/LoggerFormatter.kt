@@ -112,9 +112,13 @@ public abstract class BaseLoggerFormatter(private val textFormat: (String?, Arra
 
         val level = info.level
 
-        val color: ColorTypes = level?.color ?: FontColorTypes.BLUE
+        val defColor: ColorTypes = FontColorTypes.BLUE
 
-        builder.color(color)
+        val color: ColorTypes = level?.color ?: defColor
+
+
+
+        builder.color(defColor)
 
         builder.add("[", LocalDateTime.now().toString(), "]")
         info.thread?.apply {
@@ -123,7 +127,9 @@ public abstract class BaseLoggerFormatter(private val textFormat: (String?, Arra
         }
         builder.add(" ")
         level?.apply {
-            builder.add("[", this.name.text, "] ")
+            builder.add(defColor, "[")
+            builder.add(color, this.name.text)
+            builder.add(defColor, "] ")
         }
         info.name?.apply {
             val logName: String = this.toLogName()
