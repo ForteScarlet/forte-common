@@ -27,6 +27,8 @@ data class NekoLogConfiguration(
     var enableColor: Boolean = true,
     // 使用的日志等级
     var level: Level = Level.INFO,
-    // 开始输出堆栈
-    var enableStack: Boolean = true
+    // 开启输出堆栈
+    var enableStack: Boolean = true,
+    // 开启输出线程名
+    var enableThread: Boolean = true
 )

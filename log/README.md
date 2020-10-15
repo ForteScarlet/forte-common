@@ -13,6 +13,8 @@ nekolog.enableColor=true
 nekolog.level=INFO
 # 开启输出堆栈信息
 nekolog.enableStack=true
+# 开启输出线程名称信息
+nekolog.enableThread=true
 ```
 
 ```yaml
@@ -25,6 +27,8 @@ nekolog:
   level: INFO
     # 开启输出堆栈信息
   enableStack: true
+    # 开启输出线程名称信息
+  enableThread: true
 ```
 
 
