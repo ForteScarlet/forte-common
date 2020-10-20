@@ -16,6 +16,9 @@
 
     <version>1.0.0-ALPHA.1</version>
 
+    <url>https://github.com/ForteScarlet/forte-common</url>
+    <scm><url>https://github.com/ForteScarlet/forte-common</url></scm>
+
     <modules>
         <module>utils</module>
         <module>ioc</module>
@@ -394,17 +397,17 @@
                     <version>${dokka.version}</version>
                     <executions>
                         <execution>
-                            <phase>site-deploy</phase>
+                            <phase>install</phase>
                             <goals>
-                                <goal>dokka</goal>
-                                <goal>javadoc</goal>
+                                <!--<goal>dokka</goal>-->
+                                <!--<goal>javadoc</goal>-->
                                 <goal>javadocJar</goal>
                             </goals>
                         </execution>
                     </executions>
                     <configuration>
 
-                        <skip>true</skip>
+                        <!--<skip>true</skip>-->
 
                         <includes>
                             <include>modules.md</include>
@@ -421,7 +424,7 @@
                         <!--<noJdkLink>true</noJdkLink>-->
                         <!--<noStdlibLink>true</noStdlibLink>-->
 
-                        <outputDir>../simple-robot-2.0-doc/docs/${project.name}/doc</outputDir>
+                        <!--<outputDir>../simple-robot-2.0-doc/docs/${project.name}/doc</outputDir>-->
 
                         <dokkaPlugins>
                             <!--<plugin>-->

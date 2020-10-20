@@ -45,6 +45,53 @@ common是从simple-robot项目中独立出来的公共模块，
 
 # 使用
 
+由于`forte-common`是多模块项目，因此我推荐使用maven的版本管理，这比你自己管理来的轻松，大概。
+版本参考：[![](https://img.shields.io/maven-central/v/love.forte.common/common-parent)](https://repo1.maven.org/maven2/love/forte/common/)
+
 ### Maven
+
+首先导入父类项目或者使用 ``
+```xml
+    <parent>
+        <groupId>love.forte.common</groupId>
+        <artifactId>common-parent</artifactId>
+        <version>1.0.0-ALPHA.1</version>
+    </parent>
+```
+或
+```xml
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>love.forte.common</groupId>
+                <artifactId>common-parent</artifactId>
+                <version>1.0.0-ALPHA.1</version>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+```
+
+然后导入你所需要的依赖，以ioc模块举例：
+```xml
+    <dependency>
+        <groupId>love.forte.common</groupId>
+        <artifactId>ioc</artifactId>
+    </dependency>
+```
+
+当然，如果你想要自己动手丰衣足食，自己进行版本管理也可以：
+```xml
+        <dependency>
+            <groupId>love.forte.common</groupId>
+            <artifactId>ioc</artifactId>
+            <version>${version}</version>
+        </dependency>
+```
+
+这是maven的示例，而至于例如gradle之类的...总之是一样的道理~
+
+
+
 
 
