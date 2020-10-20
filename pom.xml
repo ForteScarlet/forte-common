@@ -55,7 +55,7 @@
         <fastjson.version>1.2.54</fastjson.version>
         <hutool.version>5.4.0</hutool.version>
 
-        <catCode.version>1.0.0-ALPHA.1</catCode.version>
+        <!--<catCode.version>1.0.0-ALPHA.1</catCode.version>-->
 
     </properties>
 
@@ -74,12 +74,12 @@
     <dependencyManagement>
         <dependencies>
 
-            <!-- catcode -->
-            <dependency>
-                <groupId>love.forte</groupId>
-                <artifactId>catcode</artifactId>
-                <version>${catCode.version}</version>
-            </dependency>
+            <!--&lt;!&ndash; catcode &ndash;&gt;-->
+            <!--<dependency>-->
+            <!--    <groupId>love.forte</groupId>-->
+            <!--    <artifactId>catcode</artifactId>-->
+            <!--    <version>${catCode.version}</version>-->
+            <!--</dependency>-->
             <!--<editor-fold desc="commons">-->
             <!-- common-utils -->
             <dependency>
