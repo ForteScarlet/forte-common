@@ -50,7 +50,7 @@ common是从simple-robot项目中独立出来的公共模块，
 
 ### Maven
 
-首先导入父类项目或者使用 `dependencyManagement`
+首先使用 `parent` 或者 `dependencyManagement` 进行版本控制：
 ```xml
     <parent>
         <groupId>love.forte.common</groupId>
