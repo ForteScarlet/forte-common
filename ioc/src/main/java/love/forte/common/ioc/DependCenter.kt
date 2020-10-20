@@ -9,7 +9,7 @@
  * email  ForteScarlet@163.com
  * QQ     1149159218
  */
-
+@file:JvmName("DependCenters")
 package love.forte.common.ioc
 
 import love.forte.common.annotation.Ignore

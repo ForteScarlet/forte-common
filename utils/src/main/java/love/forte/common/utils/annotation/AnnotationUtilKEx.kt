@@ -10,6 +10,7 @@
  * QQ     1149159218
  */
 
+@file:JvmName("AnnotationKUtil")
 package love.forte.common.utils.annotation
 
 import java.lang.reflect.AnnotatedElement

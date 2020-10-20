@@ -5,7 +5,7 @@
     <parent>
         <groupId>love.forte.common</groupId>
         <artifactId>common-parent</artifactId>
-        <version>1.0.0-ALPHA.1</version>
+        <version>1.0.0-ALPHA.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -30,6 +30,15 @@
             <version>${yaml-version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
+        </dependency>
     </dependencies>
 
 

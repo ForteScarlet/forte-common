@@ -9,7 +9,7 @@
  * email  ForteScarlet@163.com
  * QQ     1149159218
  */
-
+@file:JvmName("ConfigurationInjectors")
 package love.forte.common.configuration
 
 import love.forte.common.configuration.annotation.AsConfig

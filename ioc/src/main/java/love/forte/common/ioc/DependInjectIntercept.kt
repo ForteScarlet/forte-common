@@ -15,6 +15,7 @@ package love.forte.common.ioc
 
 /**
  * depend 注入前的拦截。
+ * 尚未实现。
  */
 @Deprecated("unused")
 public interface DependInjectIntercept<B> {

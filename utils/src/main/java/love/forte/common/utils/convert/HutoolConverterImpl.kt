@@ -9,7 +9,8 @@
  * email  ForteScarlet@163.com
  * QQ     1149159218
  */
-
+@file:JvmName("Converters")
+@file:JvmMultifileClass
 package love.forte.common.utils.convert
 
 import cn.hutool.core.convert.AbstractConverter
