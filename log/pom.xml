@@ -5,12 +5,14 @@
     <parent>
         <groupId>love.forte.common</groupId>
         <artifactId>common-parent</artifactId>
-        <version>1.0.0-ALPHA.2</version>
+        <version>1.0.0-ALPHA.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>log</artifactId>
 
+    <name>forte-common-log</name>
+    <description>forte-common log模块。</description>
 
     <dependencies>
 
