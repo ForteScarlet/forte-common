@@ -55,7 +55,7 @@ common是从simple-robot项目中独立出来的公共模块，
     <parent>
         <groupId>love.forte.common</groupId>
         <artifactId>common-parent</artifactId>
-        <version>1.0.0-ALPHA.1</version>
+        <version>${version}</version>
     </parent>
 ```
 或
@@ -65,7 +65,7 @@ common是从simple-robot项目中独立出来的公共模块，
             <dependency>
                 <groupId>love.forte.common</groupId>
                 <artifactId>common-parent</artifactId>
-                <version>1.0.0-ALPHA.1</version>
+                <version>${version}</version>
                 <scope>import</scope>
             </dependency>
         </dependencies>
