@@ -58,7 +58,7 @@ public infix fun Time.timeAs(type: TimeType): Long {
     return when (type) {
         Nanos -> toNanos()
         Micros -> toMicros()
-        Millis -> toMicros()
+        Millis -> toMillis()
         Seconds -> toSeconds()
         Minutes -> toMinutes()
         Hours -> toHours()
@@ -70,6 +70,9 @@ public infix fun Time.timeAs(type: TimeType): Long {
  * 将一个时间数值根据 [时间类型][timeUnit] 转化为一个内联时间类 [Time]
  */
 public infix fun Number.timeBy(timeUnit: TimeUnit): Time = Time(timeUnit.toMillis(toLong()))
+
+/** 秒转毫秒 */
+public fun Number.secondToMill(): Long = TimeUnit.SECONDS.toMillis(toLong())
 
 /**
  * 获取当前时间的 [Time] 类型
