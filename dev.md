@@ -1,8 +1,18 @@
-# 1.0.0-ALPHA.2
+# 1.0.0
+
+## ALPHA.1
+第一个版本
+
+## ALPHA.2
 - 隐藏/修改部分文件
 - 移除catcode的版本管理
 - `hutool` update to `5.4.6`
 
+## ALPHA.3
+### configuration 
+- 修复key的`-`转化。
 
-# 1.0.0-ALPHA.1
-第一个版本
+## ALPHA.4
+### log
+- 修复noLanguage下不会格式化参数的问题。
+

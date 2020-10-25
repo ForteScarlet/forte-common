@@ -18,7 +18,10 @@ import love.forte.nekolog.color.ColorBuilder
 import love.forte.nekolog.color.ColorTypes
 import love.forte.nekolog.color.FontColorTypes
 import org.slf4j.event.Level
+import java.text.MessageFormat
 import java.time.LocalDateTime
+import java.util.*
+import java.util.regex.Pattern
 
 
 public fun interface LoggerNameReset {
@@ -164,7 +167,64 @@ object LanguageLoggerFormatter :
 /**
  * 不进行语言格式化.
  */
-object NoLanguageLoggerFormatter : BaseLoggerFormatter({ text, _ -> text ?: "null" })
+object NoLanguageLoggerFormatter : BaseLoggerFormatter({ text, args ->
+    text?.let {
+        if (args.isEmpty()) it else toMessageFormat(it, Locale.getDefault()).format(args)
+    } ?: "null"
+})
+
+
+/**
+ * 将文本转化为MessageFormat格式的文本。其中将兼容 {code {} }的格式。
+ *
+ * @param text 文本
+ * @return [MessageFormat]
+ */
+private fun toMessageFormat(text: String, locale: Locale): MessageFormat {
+    return if (text.contains("{}")) {
+        simpleFormat(text, locale)
+    } else {
+        normalFormat(text, locale)
+    }
+}
+
+/**
+ * 切割正则
+ */
+private val SIMPLE_SPLIT_PATTERN: Pattern = Pattern.compile("\\{}")
+
+
+/**
+ * 将 `{}` 的格式转化为 `{number}` 的格式。
+ *
+ * @param text   文本
+ * @param locale locale
+ * @return [MessageFormat]
+ */
+private fun simpleFormat(text: String, locale: Locale): MessageFormat {
+    val split = SIMPLE_SPLIT_PATTERN.split(text, -1)
+    val sb = java.lang.StringBuilder()
+    for (i in split.indices) {
+        sb.append(split[i])
+        if (i < split.size - 1) {
+            sb.append('{').append(i).append('}')
+        }
+    }
+    return normalFormat(sb.toString(), locale)
+}
+
+/**
+ * 正常解析。
+ *
+ * @param text   文本
+ * @param locale locale
+ * @return [MessageFormat]
+ */
+private fun normalFormat(text: String, locale: Locale): MessageFormat {
+    return MessageFormat(text, locale)
+}
+
+
 
 
 private const val lengthThreshold = 60
