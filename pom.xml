@@ -14,7 +14,7 @@
     <artifactId>common-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>1.0.0-ALPHA.1</version>
+    <version>1.0.0-ALPHA.2</version>
 
     <url>https://github.com/ForteScarlet/forte-common</url>
     <scm><url>https://github.com/ForteScarlet/forte-common</url></scm>
@@ -53,9 +53,8 @@
 
         <!-- some version -->
         <fastjson.version>1.2.54</fastjson.version>
-        <hutool.version>5.4.0</hutool.version>
+        <hutool.version>5.4.6</hutool.version>
 
-        <!--<catCode.version>1.0.0-ALPHA.1</catCode.version>-->
 
     </properties>
 
@@ -73,14 +72,6 @@
     <!-- dependencyManagement -->
     <dependencyManagement>
         <dependencies>
-
-            <!--&lt;!&ndash; catcode &ndash;&gt;-->
-            <!--<dependency>-->
-            <!--    <groupId>love.forte</groupId>-->
-            <!--    <artifactId>catcode</artifactId>-->
-            <!--    <version>${catCode.version}</version>-->
-            <!--</dependency>-->
-            <!--<editor-fold desc="commons">-->
             <!-- common-utils -->
             <dependency>
                 <groupId>love.forte.common</groupId>
