@@ -14,10 +14,7 @@ package love.forte.nekolog
 
 import org.slf4j.event.Level
 import org.slf4j.helpers.MarkerIgnoringBase
-import sun.reflect.CallerSensitive
 import java.io.PrintStream
-
-
 
 
 /**
@@ -185,7 +182,7 @@ open class NekoLogger(
     }
 
     override fun debug(format: String?, vararg arguments: Any?) {
-        log(format, Level.DEBUG, debugPrint, null, arguments)
+        log(format, Level.DEBUG, debugPrint, null, *arguments)
     }
 
     override fun debug(msg: String?, t: Throwable?) {
