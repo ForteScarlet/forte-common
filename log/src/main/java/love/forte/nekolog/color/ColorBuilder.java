@@ -2,7 +2,6 @@ package love.forte.nekolog.color;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.StringJoiner;
 
 /**
  * @author ForteScarlet <[163邮箱地址]ForteScarlet@163.com>
@@ -19,7 +18,7 @@ public class ColorBuilder {
     protected final static String END = "\u001b[0m";
 
     /** 颜色字符串结果区 */
-    protected final StringJoiner colorJoiner = new StringJoiner("", "", END);
+    protected final StringBuilder colorBuilder = new StringBuilder();
 
     /** 按照顺序，使用的颜色列表 */
     protected final List<Integer> colors = new LinkedList<>();
@@ -154,7 +153,7 @@ public class ColorBuilder {
         }
 
 
-        String colorStr = colorJoiner.toString();
+        String colorStr = colorBuilder.toString();
         return new Colors(colorStr, colors);
     }
 
@@ -163,7 +162,7 @@ public class ColorBuilder {
      */
     public String buildString(){
         flush();
-        return colorJoiner.toString();
+        return colorBuilder.append(END).toString();
     }
 
     @Override
@@ -180,9 +179,9 @@ public class ColorBuilder {
         if(outStr.length() > 0){
             if(this.nowColor == -1){
                 //如果为-1，则说明当前等待区字符无颜色，增加一个END并拼接
-                colorJoiner.add(headEnd(outStr));
+                colorBuilder.append(headEnd(outStr));
             }else{
-                colorJoiner.add(toColorNoEnd(outStr, this.nowColor));
+                colorBuilder.append(toColorNoEnd(outStr, this.nowColor));
             }
             //记录颜色
             colors.add(this.nowColor);

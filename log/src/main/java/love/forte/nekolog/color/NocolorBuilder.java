@@ -45,7 +45,7 @@ public class NocolorBuilder extends ColorBuilder {
 
     @Override
     protected void flush() {
-        colorJoiner.add(nowStr.toString());
+        colorBuilder.add(nowStr.toString());
         nowStr.delete(0, nowStr.length());
     }
 }
