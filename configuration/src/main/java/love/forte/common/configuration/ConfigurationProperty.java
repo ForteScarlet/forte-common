@@ -77,6 +77,10 @@ public interface ConfigurationProperty {
      * 得到int类型的基础数据类型的配置信息。
      *
      * @return 配置信息
+     *
+     * @throws NullPointerException 获取不到此配置时
+     * @throws RuntimeException 无法进行类型转化时
+     *
      */
     int getInt();
 
@@ -85,6 +89,9 @@ public interface ConfigurationProperty {
      * 得到long类型的基础数据类型的配置信息。
      *
      * @return 配置信息
+     *
+     * @throws NullPointerException 获取不到此配置时
+     * @throws RuntimeException 无法进行类型转化时
      */
     long getLong();
 
@@ -93,6 +100,9 @@ public interface ConfigurationProperty {
      * 得到boolean类型的基础数据类型的配置信息。
      *
      * @return 配置信息
+     *
+     * @throws NullPointerException 获取不到此配置时
+     * @throws RuntimeException 无法进行类型转化时
      */
     boolean getBoolean();
 
