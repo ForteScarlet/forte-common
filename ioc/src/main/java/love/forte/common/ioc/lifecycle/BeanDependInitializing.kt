@@ -10,7 +10,7 @@
  * QQ     1149159218
  */
 
-package love.forte.common.ioc
+package love.forte.common.ioc.lifecycle
 
 
 /**
@@ -25,10 +25,10 @@ public interface BeanDependInitializing {
     /**
      * 当被实例化了的时候。
      */
-    fun afterCreate()
+    fun afterCreate(bean: Any, name: String): Any
 
     /**
      * 当参数被设置了之后。
      */
-    fun afterPropertiesInject()
+    fun afterPropertiesInject(bean: Any, name: String): Any
 }

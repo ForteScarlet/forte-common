@@ -10,7 +10,7 @@
  * QQ     1149159218
  */
 
-package love.forte.common.ioc
+package love.forte.common.ioc.lifecycle
 
 import java.io.Closeable
 

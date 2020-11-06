@@ -10,17 +10,19 @@
  * QQ     1149159218
  */
 
-package love.forte.common.ioc
+package love.forte.common.ioc.lifecycle
 
+import love.forte.common.ioc.BeanDepend
 import love.forte.common.utils.annotation.AnnotationUtil
 import java.lang.reflect.AnnotatedElement
 
 
 /**
- * 可以动态注入bean的接口。实现了此接口的bean最终不应被注入到依赖中心。
+ * 可以动态注入bean的接口。
+ *  注册中心属于一种 **生命周期**，其不会被依赖管理, 除非通过 [love.forte.common.ioc.DependCenter.register] 的 [BeanDepend] 实例。
  *
  */
-public interface BeanDependRegistrar {
+public interface BeanDependRegistrar : BeanLifeCycle {
     fun registerBeanDepend(annotationHelper: AnnotationHelper, beanDependRegistry: BeanDependRegistry)
 }
 

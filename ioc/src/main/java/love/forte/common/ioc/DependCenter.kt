@@ -22,6 +22,10 @@ import love.forte.common.ioc.annotation.Constr
 import love.forte.common.ioc.annotation.Depend
 import love.forte.common.ioc.annotation.Pass
 import love.forte.common.ioc.exception.*
+import love.forte.common.ioc.lifecycle.AnnotationHelper
+import love.forte.common.ioc.lifecycle.BeanDependRegistrar
+import love.forte.common.ioc.lifecycle.BeanDependRegistry
+import love.forte.common.ioc.lifecycle.CloseProcesses
 import love.forte.common.utils.FieldUtil
 import love.forte.common.utils.annotation.AnnotationUtil
 import love.forte.common.utils.convert.ConverterManager
@@ -748,9 +752,10 @@ constructor(
 
 
     /**
-     * 注册一个beanDepend. 直接注册
+     * 注册一个beanDepend. 直接注册。
+     * 一切通过 [BeanDepend] 进行注册的实例均不会验证其内容，全部视为普通实例注册。
      *
-     * @throws IllegalArgumentException 如果name出现重复, 则可能抛出此异常
+     * @throws DuplicateDependNameException 如果name出现重复, 则可能抛出此异常
      */
     override fun register(beanDepend: BeanDepend<*>) {
         val name: String = beanDepend.name
