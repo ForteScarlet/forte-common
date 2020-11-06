@@ -11,7 +11,10 @@
     <version>1.0.0-ALPHA.4</version>
 
     <url>https://github.com/ForteScarlet/forte-common</url>
-    <scm><url>https://github.com/ForteScarlet/forte-common</url></scm>
+    <scm>
+        <url>https://github.com/ForteScarlet/forte-common</url>
+        <tag>forte-common</tag>
+    </scm>
 
     <name>forte-common</name>
     <description>forte-common是从simple-robot项目中独立出来的公共模块，
@@ -388,7 +391,7 @@
                     <version>${dokka.version}</version>
                     <executions>
                         <execution>
-                            <phase>install</phase>
+                            <phase>pre-site</phase>
                             <goals>
                                 <!--<goal>dokka</goal>-->
                                 <!--<goal>javadoc</goal>-->
@@ -563,7 +566,11 @@
     <developers>
         <developer>
             <roles>
-                <role>a single programmer</role>
+                <role>Project manager</role>
+                <role>Architect</role>
+                <role>Developer</role>
+                <role>Cleaner</role>
+                <role>Mascot</role>
             </roles>
             <name>ForteScarlet</name>
             <email>ForteScarlet@163.com</email>
