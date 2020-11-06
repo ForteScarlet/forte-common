@@ -82,6 +82,10 @@ public open class HutoolConverterManagerImpl(private val converterRegistry: Conv
         return converterRegistry.convert(target, value, defValue, true)
     }
 
+    override fun <T : Any?> convert(targetClass: Class<T>, value: Any?, defValue: T?): T {
+        return converterRegistry.convert<T>(targetClass, value, defValue)
+    }
+
     /**
      * 获取某目标的转化器
      */
