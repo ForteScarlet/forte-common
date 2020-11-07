@@ -391,7 +391,7 @@
                     <version>${dokka.version}</version>
                     <executions>
                         <execution>
-                            <phase>pre-site</phase>
+                            <phase>install</phase>
                             <goals>
                                 <!--<goal>dokka</goal>-->
                                 <!--<goal>javadoc</goal>-->
