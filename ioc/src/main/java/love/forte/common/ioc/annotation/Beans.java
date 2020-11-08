@@ -41,7 +41,10 @@ public @interface Beans {
     Depend depend() default @Depend;
 
 
-    /** 根据参数类型列表来指定构造函数，默认为无参构造。仅标注在类上的时候有效 */
+    /**
+     * 根据参数类型列表来指定构造函数，默认为无参构造。仅标注在类上的时候有效
+     *  TODO 待实现
+     */
     Class[] constructor() default {};
 
     /**
