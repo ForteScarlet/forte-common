@@ -440,4 +440,22 @@ public class AnnotationUtil {
         NULL_CACHE.clear();
     }
 
+
+    /**
+     * 重置annotation lru map的最大值。
+     * @param capacity
+     */
+    public static void setAnnotationCacheCapacity(int capacity) {
+        ANNOTATION_CACHE.setCapacity(capacity);
+    }
+
+    /**
+     * 重置null annotation lru map的最大值。
+     * @param capacity
+     */
+    public static void setNullAnnotationCacheCapacity(int capacity) {
+        NULL_CACHE.setCapacity(capacity);
+    }
+
+
 }

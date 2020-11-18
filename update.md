@@ -18,3 +18,8 @@
 - 修复格式化参数问题。
 - 修复nocolor模式下结尾依旧有颜色代码的问题。
 - 堆栈与线程信息的输出调整默认值为false。
+
+## ALPHA.5
+### utils
+- 增加一个 LRULinkedHashMap。
+- AnnotationUtil 更新为上述的简易lru缓存。
