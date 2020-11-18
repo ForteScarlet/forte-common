@@ -25,7 +25,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)    //注解会在class字节码文件中存在，在运行时可以通过反射获取到
 @Target({ElementType.TYPE, ElementType.METHOD}) //接口、类、枚举、注解、方法
 @Documented
-@Beans(init = true)
+@Beans
 @AnnotateMapping(value = Beans.class)
 public @interface SpareBeans {
 
@@ -51,5 +51,12 @@ public @interface SpareBeans {
      * 是否在依赖注入流程结束后初始化一次，默认为false，即使用懒加载策略。
      */
     boolean init() default false;
+
+
+    /**
+     * 优先级。当在获取某个依赖的时候，假如在通过类型获取的时候存在多个值，会获取优先级更高级别的依赖并摒弃其他依赖。
+     * 升序排序。最大值，即最小优先级。
+     */
+    int priority() default Integer.MAX_VALUE;
 
 }

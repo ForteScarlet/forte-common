@@ -1,4 +1,5 @@
 # forte-common
+[![](https://img.shields.io/maven-central/v/love.forte.common/common-parent)](https://repo1.maven.org/maven2/love/forte/common/)
 
 common是从simple-robot项目中独立出来的公共模块，
 
@@ -43,7 +44,7 @@ common是从simple-robot项目中独立出来的公共模块，
 
 
 
-# 使用
+# 安装
 
 由于`forte-common`是多模块项目，因此我推荐使用maven的版本管理，这比你自己管理来的轻松，大概。
 版本参考：[![](https://img.shields.io/maven-central/v/love.forte.common/common-parent)](https://repo1.maven.org/maven2/love/forte/common/)
@@ -93,6 +94,7 @@ common是从simple-robot项目中独立出来的公共模块，
 这是maven的示例，而至于例如gradle之类的...总之是一样的道理~
 
 
-
+### 使用
+可参考各个模块下的README文档。
 
 
