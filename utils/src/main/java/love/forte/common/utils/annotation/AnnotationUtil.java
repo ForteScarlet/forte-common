@@ -254,6 +254,7 @@ public class AnnotationUtil {
      * @param <T>
      * @return
      */
+    @SafeVarargs
     private static <T extends Annotation> T getAnnotationFromArrays(Annotation from, Annotation[] array, Class<T> annotationType, Class<T>... ignored) {
         //先浅查询第一层
         //全部注解
@@ -432,6 +433,7 @@ public class AnnotationUtil {
      */
     public static void cleanCache() {
         ANNOTATION_CACHE.clear();
+        NULL_CACHE.clear();
     }
 
 }
