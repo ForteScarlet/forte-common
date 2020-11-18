@@ -112,14 +112,11 @@ public abstract class BaseLoggerFormatter(private val textFormat: (String?, Arra
     override fun format(info: FormatterInfo, loggerNameReset: LoggerNameReset): String {
         val builder = info.colorBuilder
         // [time][threadName] [level] stackTrace : msg
-
         val level = info.level
-
         val defColor: ColorTypes = FontColorTypes.BLUE
-
         val color: ColorTypes = level?.color ?: defColor
 
-
+        val nameColor = FontColorTypes.DARK_GREEN
 
         builder.color(defColor)
 
@@ -128,28 +125,29 @@ public abstract class BaseLoggerFormatter(private val textFormat: (String?, Arra
             val threadName = this.name
             builder.add("[", threadName, "]")
         }
-        builder.add(" ")
+        builder.add("-")
         level?.apply {
             builder.add(defColor, "[")
             builder.add(color, this.name.text)
             builder.add(defColor, "] ")
+            builder.append("| ")
         }
         info.name?.apply {
             val logName: String = this.toLogName()
             if (logName.length != this.length) {
                 loggerNameReset(logName)
             }
-            builder.append(logName).append(' ')
+            builder.add(nameColor, logName).append(' ')
         }
         info.stackTrace?.apply {
             if (info.name != null) {
                 builder.append("| ")
             }
             val stackTraceText: String = this.show(info.name)
-            builder.append(stackTraceText).append(' ')
+            builder.add(nameColor, stackTraceText).append(' ')
         }
         builder.append(": ")
-        builder.add(color, textFormat(info.msg, info.args))
+        builder.append(textFormat(info.msg, info.args))
         return builder.toString()
     }
 
