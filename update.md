@@ -32,3 +32,6 @@
 - 增加一个 LRULinkedHashMap。
 - AnnotationUtil 更新为上述的简易lru缓存。
 
+### ioc
+- 支持通过构造注入。
+- 优化异常提示。
