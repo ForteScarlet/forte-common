@@ -25,6 +25,9 @@
 - 优化部分注释。
 
 ## ALPHA.5
+### global
+- update kotlin to v1.4.20
+
 ### log
 - 简单优化色彩效果
 
@@ -32,6 +35,7 @@
 - 增加一个 LRULinkedHashMap。
 - AnnotationUtil 更新为上述的简易lru缓存。
 
-### ioc
-- 支持通过构造注入。
-- 优化异常提示。
+## ALPHA.6
+- update `hutool` to `v5.5.1`
+
+
