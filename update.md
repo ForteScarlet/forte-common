@@ -35,7 +35,7 @@
 - 增加一个 LRULinkedHashMap。
 - AnnotationUtil 更新为上述的简易lru缓存。
 
-## ALPHA.6
+## ALPHA.6(now)
 - update `hutool` to `v5.5.1`
 
 
