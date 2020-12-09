@@ -15,15 +15,27 @@ package love.forte.common.sequences
 
 
 /**
- * 去重，并且在出现重复的时候进行合并。（或者用于抛出异常。）
+ * 以自定义规则去重，并且在出现重复的时候对重复的内容进行重新定义。（或者用于抛出异常。）
+ * [merger] 的两个参数中，[K] 代表 [selector] 所选择的用于去重的当前元素内容，[T] 则代表这个出现了重复的当前元素。
+ *
+ * 如果 [merger] 返回值为null，则会忽略掉当前重复值。
+ *
+ * @throws IllegalStateException 如果 [merger] 后的元素依旧存在重复情况。
+ *
  */
-public fun <T, K> Sequence<T>.distinctByMerger(selector: (T) -> K, merger: (K, T) -> T): Sequence<T> {
+public fun <T, K> Sequence<T>.distinctByMerger(selector: (T) -> K, merger: (K, T) -> T?): Sequence<T> {
     return DistinctMergerSequence(this, selector, merger)
 }
 
 /**
- * 去重，并且在出现重复的时候进行合并。（或者用于抛出异常。）
+ * 去重，并且在出现重复的时候对重复的内容进行重新定义。（或者用于抛出异常。）
+ * [merger] 中的参数 [T] 代表出现了重复的元素，返回值则代表对此重复元素的最终处理。
+ *
+ * 如果 [merger] 返回值为null，则会忽略掉当前重复值。
+ *
+ * @throws IllegalStateException 如果 [merger] 后的元素依旧存在重复情况。
+ *
  */
-public fun <T> Sequence<T>.distinctByMerger(merger: (T, T) -> T): Sequence<T> {
-    return DistinctMergerSequence(this, { it }, merger)
+public fun <T> Sequence<T>.distinctByMerger(merger: (T) -> T?): Sequence<T> {
+    return DistinctMergerSequence<T, T>(this, merger)
 }

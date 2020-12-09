@@ -36,6 +36,7 @@
 - AnnotationUtil 更新为上述的简易lru缓存。
 
 ## ALPHA.6(now)
-- update `hutool` to `v5.5.1`
+- update `hutool` to `v5.5.1`。
 
-
+### utils
+- 优化 `Sequence<T>.distinctByMerger`。
