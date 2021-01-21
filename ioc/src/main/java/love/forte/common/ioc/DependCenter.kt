@@ -16,6 +16,7 @@ import love.forte.common.annotation.Ignore
 import love.forte.common.configuration.Configuration
 import love.forte.common.configuration.ConfigurationInjector
 import love.forte.common.configuration.annotation.AsConfig
+import love.forte.common.configuration.impl.EmptyConfiguration
 import love.forte.common.configuration.impl.LinkedMapConfiguration
 import love.forte.common.ioc.annotation.Beans
 import love.forte.common.ioc.annotation.Constr
@@ -66,12 +67,12 @@ constructor(
     /**
      * 需要被初始化的beans列表
      */
-    private val needInitialized: Queue<BeanDepend<*>> = PriorityQueue { b1, b2 -> b1.priority.compareTo(b2.priority) }
+    private var needInitialized: Queue<BeanDepend<*>>? = PriorityQueue { b1, b2 -> b1.priority.compareTo(b2.priority) }
 
 
-    private val preInitPasses: Queue<DependPass> = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
+    private var preInitPasses: Queue<DependPass>? = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
 
-    private val postInitPasses: Queue<DependPass> = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
+    private var postInitPasses: Queue<DependPass>? = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
 
     @Volatile
     private var initialized: Boolean = false
@@ -87,29 +88,53 @@ constructor(
             synchronized(initializedLock) {
                 // needInitialized.sortedBy { it.priority }
 
-                while (preInitPasses.isNotEmpty()) {
-                    preInitPasses.poll()(this)
+                preInitPasses?.let {  pre ->
+                    while(pre.isNotEmpty()) {
+                        pre.poll()(this)
+                    }
                 }
 
-                while (needInitialized.isNotEmpty()) {
-                    needInitialized.poll().instanceSupplier(this)
+                needInitialized?.let { init ->
+                    while (init.isNotEmpty()) {
+                        init.poll().instanceSupplier(this)
+                    }
                 }
 
-                while (postInitPasses.isNotEmpty()) {
-                    postInitPasses.poll()(this)
+                postInitPasses?.let { post ->
+                    while (post.isNotEmpty()) {
+                        post.poll()(this)
+                    }
                 }
+
+                preInitPasses = null
+                needInitialized = null
+                postInitPasses = null
+
+                // while (preInitPasses?.isNotEmpty() == true) {
+                //     preInitPasses?.poll()(this)
+                // }
+
+                // while (needInitialized?.isNotEmpty() == true) {
+                //     needInitialized?.poll()?.instanceSupplier(this)
+                // }
+
+                // while (postInitPasses.isNotEmpty()) {
+                //     postInitPasses.poll()(this)
+                // }
 
             }
 
             initialized = true
-
         }
     }
 
 
     /**
      * close.
+     * 会清除内部所有的东西，包括父类依赖工厂以及配置内容。
+     * 此方法一般调用于 [shutdown hook][Runtime.addShutdownHook]
      */
+    @Synchronized
     override fun close() {
         nameResourceWarehouse.values.forEach {
             if (it is CloseProcesses) {
@@ -120,7 +145,16 @@ constructor(
                 }
             }
         }
+
+        nameResourceWarehouse.clear()
+        singletonMap.clear()
+        parent = null
+        configuration = EmptyConfiguration
+
     }
+
+
+
 
     /**
      * 类型最终值。获取一个类型，先优先尝试使用此处。
@@ -769,7 +803,7 @@ constructor(
     private fun registerPrePass(prePass: DependPass) {
         if (!initialized) {
             synchronized(initializedLock) {
-                preInitPasses.add(prePass)
+                preInitPasses?.add(prePass)
             }
         } else {
             prePass(this)
@@ -782,7 +816,7 @@ constructor(
     private fun registerPostPass(postPass: DependPass) {
         if (!initialized) {
             synchronized(initializedLock) {
-                postInitPasses.add(postPass)
+                postInitPasses?.add(postPass)
             }
         } else {
             postPass(this)
@@ -804,7 +838,7 @@ constructor(
         if (beanDepend.needInit) {
             if (!initialized) {
                 synchronized(initializedLock) {
-                    needInitialized.add(beanDepend)
+                    needInitialized?.add(beanDepend)
                 }
             } else {
                 //init 过了, 直接获取一次
