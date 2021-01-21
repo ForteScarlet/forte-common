@@ -77,6 +77,9 @@ constructor(
     @Volatile
     private var initialized: Boolean = false
 
+    @Volatile
+    private var closed: Boolean = false
+
     private val initializedLock = Any()
 
     /**
@@ -136,6 +139,10 @@ constructor(
      */
     @Synchronized
     override fun close() {
+        if (closed) {
+            return
+        }
+
         nameResourceWarehouse.values.forEach {
             if (it is CloseProcesses) {
                 try {
@@ -151,6 +158,10 @@ constructor(
         parent = null
         configuration = EmptyConfiguration
 
+        preInitPasses = null
+
+
+        closed = true
     }
 
 
