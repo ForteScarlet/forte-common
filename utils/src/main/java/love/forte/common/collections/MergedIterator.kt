@@ -52,7 +52,7 @@ internal class MergedIterator<T>(
         return when(whichOne) {
             true -> it1.next()
             false -> it2.next()
-            else -> throw NoSuchElementException("no more next.")
+            else -> throw NoSuchElementException("No more element.")
         }
     }
 }
