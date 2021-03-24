@@ -23,7 +23,9 @@ internal class MergedIterator<T>(
 
     /**
      * if `true`, use it1.
+     *
      * if `false`, use it2.
+     *
      * if `null`, no more next.
      */
     private var whichOne: Boolean? = reFlashWhichOne()
