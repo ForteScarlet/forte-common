@@ -22,6 +22,8 @@ import java.util.concurrent.ConcurrentSkipListMap
  * 通过指定一个排序规则实现存入元素的时候可自动排序，
  * 且可存在排序值相同的元素。
  *
+ * 需要注意的是，不允许使用 [MutableIterator.remove] 方法.
+ *
  * @property sortedMap 使用的有序表。
  *
  * @author [ ForteScarlet ](https://github.com/ForteScarlet)
@@ -39,6 +41,7 @@ internal constructor(
     constructor(vararg elements: T) : this() {
         elements.forEach { add(it) }
     }
+
 
     /**
      * 排序数量，即总共有多少种顺序
@@ -99,8 +102,19 @@ internal constructor(
     /**
      * iterator.
      */
-    override fun iterator(): MutableIterator<T> = SortedListIterator()
+    override fun iterator(): MutableIterator<T> = iterator0()
 
+
+    /**
+     * Real function for iterator.
+     */
+    private fun iterator0(): MutableIterator<T> {
+        return SortedListIterator()
+    }
+
+
+    // /** 缓存迭代列表。 */
+    // private var bufferList: List<T>? = null
 
     /**
      * @see iterator
