@@ -403,9 +403,7 @@
 
                         <!--<skip>true</skip>-->
 
-                        <!--<includes>-->
-                        <!--    <include>modules.md</include>-->
-                        <!--</includes>-->
+
                         <!-- Set to true to skip dokka task, default: false -->
                         <!--                        <skip>true</skip>-->
                         <!-- Used for linking to JDK, default: 6 -->
@@ -413,40 +411,17 @@
                         <!-- Do not create index pages for empty packages -->
                         <skipEmptyPackages>true</skipEmptyPackages>
                         <!-- Emit warnings about not documented members, applies globally, also can be overridden by packageOptions -->
-                        <reportUndocumented>true</reportUndocumented>
+                        <reportUndocumented>false</reportUndocumented>
 
-                        <!--<noJdkLink>true</noJdkLink>-->
-                        <!--<noStdlibLink>true</noStdlibLink>-->
-
+                        <skipDeprecated>true</skipDeprecated>
                         <!--<outputDir>../simple-robot-2.0-doc/docs/${project.name}/doc</outputDir>-->
 
-                        <dokkaPlugins>
-                            <!--<plugin>-->
-                            <!--    <groupId>org.jetbrains.dokka</groupId>-->
-                            <!--    <artifactId>dokka-base</artifactId>-->
-                            <!--    <version>${dokka.version}</version>-->
-                            <!--</plugin>-->
-                            <!--<plugin>-->
-                            <!--    <groupId>org.jetbrains.dokka</groupId>-->
-                            <!--    <artifactId>gfm-plugin</artifactId>-->
-                            <!--    <version>${dokka.version}</version>-->
-                            <!--</plugin>-->
-                            <!--<plugin>-->
-                            <!--    <groupId>org.jetbrains.dokka</groupId>-->
-                            <!--    <artifactId>jekyll-plugin</artifactId>-->
-                            <!--    <version>${dokka.version}</version>-->
-                            <!--</plugin>-->
-                            <!--<plugin>-->
-                            <!--    <groupId>org.jetbrains.dokka</groupId>-->
-                            <!--    <artifactId>javadoc-plugin</artifactId>-->
-                            <!--    <version>${dokka.version}</version>-->
-                            <!--</plugin>-->
-                            <!--<plugin>-->
-                            <!--    <groupId>org.jetbrains.dokka</groupId>-->
-                            <!--    <artifactId>kotlin-as-java-plugin</artifactId>-->
-                            <!--    <version>${dokka.version}</version>-->
-                            <!--</plugin>-->
-                        </dokkaPlugins>
+                        <!-- Use default or set to custom path to cache directory to enable package-list caching. -->
+                        <!-- When set to default, caches stored in $USER_HOME/.cache/dokka -->
+                        <cacheRoot>default</cacheRoot>
+
+                        <offlineMode>true</offlineMode>
+
                     </configuration>
                 </plugin>
 
@@ -470,7 +445,7 @@
                 <plugin>
                     <groupId>org.sonatype.plugins</groupId>
                     <artifactId>nexus-staging-maven-plugin</artifactId>
-                    <version>1.6.7</version>
+                    <version>1.6.8</version>
                     <extensions>true</extensions>
                     <configuration>
                         <serverId>oss</serverId>
@@ -531,7 +506,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
-                    <version>1.5</version>
+                    <version>1.6</version>
                     <executions>
                         <execution>
                             <id>sign-artifacts</id>
