@@ -62,6 +62,7 @@ private data class K2JAnnotatedElement(private val kAnnotated: KAnnotatedElement
      * @since 1.5
     </T> */
     override fun <T : Annotation> getAnnotation(annotationClass: Class<T>): T? {
+        @Suppress("UNCHECKED_CAST")
         return kAnnotated.annotations.find {
             it::annotationClass.get().java == annotationClass
         } as? T

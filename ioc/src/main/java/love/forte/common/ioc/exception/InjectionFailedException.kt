@@ -9,7 +9,7 @@
  * email  ForteScarlet@163.com
  * QQ     1149159218
  */
-
+@file:JvmName("InjectionFailedExceptions")
 package love.forte.common.ioc.exception
 
 /**
@@ -28,3 +28,5 @@ class InjectionFailedException : DependException {
         writableStackTrace
     )
 }
+
+

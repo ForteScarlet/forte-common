@@ -122,7 +122,7 @@ public interface DependBeanFactory {
     /**
      * 获取一个bean对应的类型。如果此bean存在的话。
      *
-     * 对于一些第三方不支持此api的实现，建议可以考虑将返回值类型定义为 {@link Void}等，而不是null。
+     * 如果获取不到可以考虑返回null。
      *
      * 有时候可能不支持根据名称获取类型，
      * 因此请不要过于依赖此方法。

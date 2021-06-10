@@ -18,7 +18,10 @@ import love.forte.nekolog.color.ColorBuilder
 import love.forte.nekolog.color.ColorTypes
 import love.forte.nekolog.color.FontColorTypes
 import org.slf4j.event.Level
+import java.text.MessageFormat
 import java.time.LocalDateTime
+import java.util.*
+import java.util.regex.Pattern
 
 
 public fun interface LoggerNameReset {
@@ -109,14 +112,11 @@ public abstract class BaseLoggerFormatter(private val textFormat: (String?, Arra
     override fun format(info: FormatterInfo, loggerNameReset: LoggerNameReset): String {
         val builder = info.colorBuilder
         // [time][threadName] [level] stackTrace : msg
-
         val level = info.level
-
         val defColor: ColorTypes = FontColorTypes.BLUE
-
         val color: ColorTypes = level?.color ?: defColor
 
-
+        val nameColor = FontColorTypes.DARK_GREEN
 
         builder.color(defColor)
 
@@ -125,28 +125,29 @@ public abstract class BaseLoggerFormatter(private val textFormat: (String?, Arra
             val threadName = this.name
             builder.add("[", threadName, "]")
         }
-        builder.add(" ")
+        builder.add("-")
         level?.apply {
             builder.add(defColor, "[")
             builder.add(color, this.name.text)
             builder.add(defColor, "] ")
+            builder.append("| ")
         }
         info.name?.apply {
             val logName: String = this.toLogName()
             if (logName.length != this.length) {
                 loggerNameReset(logName)
             }
-            builder.append(logName).append(' ')
+            builder.add(nameColor, logName).append(' ')
         }
         info.stackTrace?.apply {
             if (info.name != null) {
                 builder.append("| ")
             }
             val stackTraceText: String = this.show(info.name)
-            builder.append(stackTraceText).append(' ')
+            builder.add(nameColor, stackTraceText).append(' ')
         }
         builder.append(": ")
-        builder.add(color, textFormat(info.msg, info.args))
+        builder.append(textFormat(info.msg, info.args))
         return builder.toString()
     }
 
@@ -164,7 +165,64 @@ object LanguageLoggerFormatter :
 /**
  * 不进行语言格式化.
  */
-object NoLanguageLoggerFormatter : BaseLoggerFormatter({ text, _ -> text ?: "null" })
+object NoLanguageLoggerFormatter : BaseLoggerFormatter({ text, args ->
+    text?.let {
+        if (args.isEmpty()) it else toMessageFormat(it, Locale.getDefault()).format(args)
+    } ?: "null"
+})
+
+
+/**
+ * 将文本转化为MessageFormat格式的文本。其中将兼容 {code {} }的格式。
+ *
+ * @param text 文本
+ * @return [MessageFormat]
+ */
+private fun toMessageFormat(text: String, locale: Locale): MessageFormat {
+    return if (text.contains("{}")) {
+        simpleFormat(text, locale)
+    } else {
+        normalFormat(text, locale)
+    }
+}
+
+/**
+ * 切割正则
+ */
+private val SIMPLE_SPLIT_PATTERN: Pattern = Pattern.compile("\\{}")
+
+
+/**
+ * 将 `{}` 的格式转化为 `{number}` 的格式。
+ *
+ * @param text   文本
+ * @param locale locale
+ * @return [MessageFormat]
+ */
+private fun simpleFormat(text: String, locale: Locale): MessageFormat {
+    val split = SIMPLE_SPLIT_PATTERN.split(text, -1)
+    val sb = java.lang.StringBuilder()
+    for (i in split.indices) {
+        sb.append(split[i])
+        if (i < split.size - 1) {
+            sb.append('{').append(i).append('}')
+        }
+    }
+    return normalFormat(sb.toString(), locale)
+}
+
+/**
+ * 正常解析。
+ *
+ * @param text   文本
+ * @param locale locale
+ * @return [MessageFormat]
+ */
+private fun normalFormat(text: String, locale: Locale): MessageFormat {
+    return MessageFormat(text, locale)
+}
+
+
 
 
 private const val lengthThreshold = 60

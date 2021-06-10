@@ -16,20 +16,22 @@ import love.forte.common.annotation.Ignore
 import love.forte.common.configuration.Configuration
 import love.forte.common.configuration.ConfigurationInjector
 import love.forte.common.configuration.annotation.AsConfig
+import love.forte.common.configuration.impl.EmptyConfiguration
 import love.forte.common.configuration.impl.LinkedMapConfiguration
 import love.forte.common.ioc.annotation.Beans
 import love.forte.common.ioc.annotation.Constr
 import love.forte.common.ioc.annotation.Depend
 import love.forte.common.ioc.annotation.Pass
 import love.forte.common.ioc.exception.*
+import love.forte.common.ioc.lifecycle.AnnotationHelper
+import love.forte.common.ioc.lifecycle.BeanDependRegistrar
+import love.forte.common.ioc.lifecycle.BeanDependRegistry
+import love.forte.common.ioc.lifecycle.CloseProcesses
 import love.forte.common.utils.FieldUtil
 import love.forte.common.utils.annotation.AnnotationUtil
 import love.forte.common.utils.convert.ConverterManager
 import java.io.Closeable
-import java.lang.reflect.Field
-import java.lang.reflect.Method
-import java.lang.reflect.Modifier
-import java.lang.reflect.Parameter
+import java.lang.reflect.*
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiFunction
@@ -65,15 +67,18 @@ constructor(
     /**
      * 需要被初始化的beans列表
      */
-    private val needInitialized: Queue<BeanDepend<*>> = PriorityQueue { b1, b2 -> b1.priority.compareTo(b2.priority) }
+    private var needInitialized: Queue<BeanDepend<*>>? = PriorityQueue { b1, b2 -> b1.priority.compareTo(b2.priority) }
 
 
-    private val preInitPasses: Queue<DependPass> = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
+    private var preInitPasses: Queue<DependPass>? = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
 
-    private val postInitPasses: Queue<DependPass> = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
+    private var postInitPasses: Queue<DependPass>? = PriorityQueue { p1, p2 -> p1.priority.compareTo(p2.priority) }
 
     @Volatile
     private var initialized: Boolean = false
+
+    @Volatile
+    private var closed: Boolean = false
 
     private val initializedLock = Any()
 
@@ -86,30 +91,58 @@ constructor(
             synchronized(initializedLock) {
                 // needInitialized.sortedBy { it.priority }
 
-                while (preInitPasses.isNotEmpty()) {
-                    preInitPasses.poll()(this)
+                preInitPasses?.let {  pre ->
+                    while(pre.isNotEmpty()) {
+                        pre.poll()(this)
+                    }
                 }
 
-                while (needInitialized.isNotEmpty()) {
-                    needInitialized.poll().instanceSupplier(this)
+                needInitialized?.let { init ->
+                    while (init.isNotEmpty()) {
+                        init.poll().instanceSupplier(this)
+                    }
                 }
 
-                while (postInitPasses.isNotEmpty()) {
-                    postInitPasses.poll()(this)
+                postInitPasses?.let { post ->
+                    while (post.isNotEmpty()) {
+                        post.poll()(this)
+                    }
                 }
+
+                preInitPasses = null
+                needInitialized = null
+                postInitPasses = null
+
+                // while (preInitPasses?.isNotEmpty() == true) {
+                //     preInitPasses?.poll()(this)
+                // }
+
+                // while (needInitialized?.isNotEmpty() == true) {
+                //     needInitialized?.poll()?.instanceSupplier(this)
+                // }
+
+                // while (postInitPasses.isNotEmpty()) {
+                //     postInitPasses.poll()(this)
+                // }
 
             }
 
             initialized = true
-
         }
     }
 
 
     /**
      * close.
+     * 会清除内部所有的东西，包括父类依赖工厂以及配置内容。
+     * 此方法一般调用于 [shutdown hook][Runtime.addShutdownHook]
      */
+    @Synchronized
     override fun close() {
+        if (closed) {
+            return
+        }
+
         nameResourceWarehouse.values.forEach {
             if (it is CloseProcesses) {
                 try {
@@ -119,7 +152,20 @@ constructor(
                 }
             }
         }
+
+        nameResourceWarehouse.clear()
+        singletonMap.clear()
+        parent = null
+        configuration = EmptyConfiguration
+
+        preInitPasses = null
+
+
+        closed = true
     }
+
+
+
 
     /**
      * 类型最终值。获取一个类型，先优先尝试使用此处。
@@ -195,16 +241,17 @@ constructor(
             ?: type.dependName
 
         builder.name(beanDependName)
-        builder.type(type)
-        builder.single(beansAnnotation.single)
-        builder.needInit(beansAnnotation.init)
-        builder.priority(beansAnnotation.priority)
+            .type(type)
+            .single(beansAnnotation.single)
+            .needInit(beansAnnotation.init)
+            .priority(beansAnnotation.priority)
+
         val asConfig: Boolean = AnnotationUtil.containsAnnotation(type, AsConfig::class.java)
         // 是否可以作为配置类
         builder.asConfig(asConfig)
 
         // 实例构建函数
-        val emptyInstanceFunc: () -> T = classToEmptyInstanceSupplier(type)
+        val emptyInstanceFunc: (DependBeanFactory) -> T = classToEmptyInstanceSupplier(type)
 
         // 值注入函数
         val instanceInject: (T, DependBeanFactory) -> T = instanceInjectFunc(beansAnnotation, type)
@@ -214,7 +261,7 @@ constructor(
         // 每次都会直接构造实例
         val realInstanceSupplier: InstanceSupplier<T> =
             InstanceSupplier { fac ->
-                val emptyInstance: T = emptyInstanceFunc()
+                val emptyInstance: T = emptyInstanceFunc(fac)
                 instanceInject(emptyInstance, fac)
                 emptyInstance
             }
@@ -358,10 +405,58 @@ constructor(
             }
     }
 
+
+    /**
+     * constr instance function.
+     * @param constr Constructor<*>
+     * @return (DependBeanFactory) -> T
+     */
+    private fun <T> constrInstance(constr: Constructor<*>) : (DependBeanFactory) -> T {
+        if (constr.parameterCount > 0) {
+            val parameterGetterList: List<(DependBeanFactory) -> Any?> = constr.parameters.mapIndexed { index, it ->
+                val depend: Depend? = AnnotationUtil.getAnnotation(it, Depend::class.java)
+                if (depend != null) {
+                    val depType = depend.type
+                    if (depend.type != Void::class.java) {
+                        // use type
+                        { fac -> fac.getOrThrow(depType.java) { e ->
+                            InjectionFailedException("$it($index) in $constr by type '$depType'", e)
+                        } }
+                    } else {
+                        // use name, if exists.
+                        val name = depend.value
+                        if (name.isNotBlank()) {
+                            { fac -> fac.getOrThrow(name) { e ->
+                                InjectionFailedException("$it($index) in $constr by name '$name'", e)
+                            } }
+                        } else {
+                            val paramType = it.type
+                            { fac -> fac.getOrThrow(paramType) { e ->
+                                InjectionFailedException("$it($index) in $constr by type '$paramType'", e)
+                            } }
+                        }
+                    }
+                } else {
+                    // use param type
+                    val paramType = it.type
+                    { fac -> fac.getOrThrow(paramType) { e ->
+                        InjectionFailedException("$it($index) in $constr by type '$paramType'", e)
+                    } }
+                }
+            }
+            return { fac -> constr.newInstance(*Array(parameterGetterList.size) { i -> parameterGetterList[i](fac) }) as T }
+
+        } else {
+            return { _ -> constr.newInstance() as T }
+        }
+    }
+
+
     /**
      * 根据一个Class，解析并得到这个class的实例化函数。
      */
-    private fun <T> classToEmptyInstanceSupplier(type: Class<out T>): () -> T {
+    private fun <T> classToEmptyInstanceSupplier(type: Class<out T>): (DependBeanFactory) -> T {
+
         val constrFuncs = type.declaredMethods.filter {
             val modifiers = it.modifiers
             // static, and no params. with @Constr
@@ -371,6 +466,7 @@ constructor(
             ) != null)
         }
 
+
         when {
             // more @Constr
             constrFuncs.size > 1 -> {
@@ -379,31 +475,23 @@ constructor(
             // no @Constr
             constrFuncs.isEmpty() -> {
                 val constructors = type.constructors
+
                 if (constructors.size == 1) {
-                    val firstConstr = constructors.first()
-                    if (firstConstr.parameterCount > 0) {
-                        throw IllegalConstrException("constructor's parameterCount > 0")
-                    } else {
-                        return { firstConstr.newInstance() as T }
-                    }
+                    return constrInstance(constructors.first())
                 } else {
-                    // more than 1 constructors. find @Constr.
+                    // more than 1 constructors. find @Depend.
                     val constrListWithAnnotation = constructors.filter {
-                        AnnotationUtil.getAnnotation(it, Constr::class.java) != null
+                        AnnotationUtil.getAnnotation(it, Depend::class.java) != null
                     }
                     when {
-                        // more than 1 with @Constr.
-                        constrListWithAnnotation.size > 1 -> throw IllegalConstrException("More than 1 constructor method annotated by @Constr, but only need 1.")
+                        // more than 1 with @Depend.
+                        constrListWithAnnotation.size > 1 -> throw IllegalConstrException("More than one constructor annotated by @Depend, but only need one.")
+
                         // nothing.
-                        constrListWithAnnotation.isEmpty() -> {
-                            val constr = type.getConstructor()
-                            return { constr.newInstance() }
-                        }
+                        constrListWithAnnotation.isEmpty() -> throw IllegalConstrException("Multiple constructor exists but no constructor annotated by @Depend, but only need one.")
+
                         // only one.
-                        else -> {
-                            val firstConstr = constructors.first()
-                            return { firstConstr.newInstance() as T }
-                        }
+                        else -> return constrInstance(constructors.first())
                     }
                 }
             }
@@ -726,7 +814,7 @@ constructor(
     private fun registerPrePass(prePass: DependPass) {
         if (!initialized) {
             synchronized(initializedLock) {
-                preInitPasses.add(prePass)
+                preInitPasses?.add(prePass)
             }
         } else {
             prePass(this)
@@ -739,7 +827,7 @@ constructor(
     private fun registerPostPass(postPass: DependPass) {
         if (!initialized) {
             synchronized(initializedLock) {
-                postInitPasses.add(postPass)
+                postInitPasses?.add(postPass)
             }
         } else {
             postPass(this)
@@ -748,9 +836,10 @@ constructor(
 
 
     /**
-     * 注册一个beanDepend. 直接注册
+     * 注册一个beanDepend. 直接注册。
+     * 一切通过 [BeanDepend] 进行注册的实例均不会验证其内容，全部视为普通实例注册。
      *
-     * @throws IllegalArgumentException 如果name出现重复, 则可能抛出此异常
+     * @throws DuplicateDependNameException 如果name出现重复, 则可能抛出此异常
      */
     override fun register(beanDepend: BeanDepend<*>) {
         val name: String = beanDepend.name
@@ -760,7 +849,7 @@ constructor(
         if (beanDepend.needInit) {
             if (!initialized) {
                 synchronized(initializedLock) {
-                    needInitialized.add(beanDepend)
+                    needInitialized?.add(beanDepend)
                 }
             } else {
                 //init 过了, 直接获取一次

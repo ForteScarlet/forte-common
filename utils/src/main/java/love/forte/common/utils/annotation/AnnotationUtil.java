@@ -12,6 +12,8 @@
 
 package love.forte.common.utils.annotation;
 
+import love.forte.common.collections.LRULinkedHashMap;
+
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
@@ -46,12 +48,12 @@ public class AnnotationUtil {
     /**
      * 注解缓存，记录曾经保存过的注解与其所在类
      */
-    private static final Map<AnnotatedElement, Set<Annotation>> ANNOTATION_CACHE = new ConcurrentHashMap<>();
+    private static final LRULinkedHashMap<AnnotatedElement, Map<Class<? extends Annotation>, Annotation>> ANNOTATION_CACHE = new LRULinkedHashMap<>(128);
 
     /**
      * 记录已经证实不存在的注解信息
      */
-    private static final Map<AnnotatedElement, Set<Class<Annotation>>> NULL_CACHE = new ConcurrentHashMap<>();
+    private static final LRULinkedHashMap<AnnotatedElement, Set<Class<? extends Annotation>>> NULL_CACHE = new LRULinkedHashMap<>(128);
 
 
     private static final Set<String> OBJECT_METHODS;
@@ -254,6 +256,7 @@ public class AnnotationUtil {
      * @param <T>
      * @return
      */
+    @SafeVarargs
     private static <T extends Annotation> T getAnnotationFromArrays(Annotation from, Annotation[] array, Class<T> annotationType, Class<T>... ignored) {
         //先浅查询第一层
         //全部注解
@@ -319,14 +322,16 @@ public class AnnotationUtil {
      * @return 注解缓存，可能为null
      */
     private static <T extends Annotation> T getCache(AnnotatedElement from, Class<T> annotatedType) {
-        Set<Annotation> list = ANNOTATION_CACHE.get(from);
-        if (list != null) {
-            // 寻找
-            for (Annotation a : list) {
-                if (a.annotationType().equals(annotatedType)) {
-                    return (T) a;
-                }
-            }
+        Map<Class<? extends Annotation>, Annotation> cacheMap = ANNOTATION_CACHE.get(from);
+        if (cacheMap != null) {
+            return (T) cacheMap.get(annotatedType);
+            // synchronized (ANNOTATION_CACHE) {
+            //     for (Annotation a : list) {
+            //         if (a.annotationType().equals(annotatedType)) {
+            //             return (T) a;
+            //         }
+            //     }
+            // }
         }
         // 找不到，返回null
         return null;
@@ -339,8 +344,8 @@ public class AnnotationUtil {
      * @param annotatedType annotation class
      */
     private static <T extends Annotation> void nullCache(AnnotatedElement from, Class<T> annotatedType) {
-        final Set<Class<Annotation>> classes = NULL_CACHE.computeIfAbsent(from, k -> new HashSet<>());
-        classes.add((Class<Annotation>) annotatedType);
+        final Set<Class<? extends Annotation>> classes = NULL_CACHE.computeIfAbsent(from, k -> new HashSet<>());
+        classes.add(annotatedType);
     }
 
     /**
@@ -350,7 +355,7 @@ public class AnnotationUtil {
      * @param annotatedType annotation class
      */
     private static <T extends Annotation> boolean isNull(AnnotatedElement from, Class<T> annotatedType) {
-        final Set<Class<Annotation>> classes = NULL_CACHE.get(from);
+        final Set<Class<? extends Annotation>> classes = NULL_CACHE.get(from);
         if (classes == null || classes.isEmpty()) {
             return false;
         }
@@ -362,13 +367,13 @@ public class AnnotationUtil {
      * 记录一条缓存记录。
      */
     private static boolean saveCache(AnnotatedElement from, Annotation annotation) {
-        Set<Annotation> set;
+        Map<Class<? extends Annotation>, Annotation> cacheMap;
         synchronized (ANNOTATION_CACHE) {
-            set = ANNOTATION_CACHE.computeIfAbsent(from, k -> new HashSet<>());
             // 如果为空，新建一个并保存
+            cacheMap = ANNOTATION_CACHE.computeIfAbsent(from, k -> new LinkedHashMap<>());
+            // 记录这个注解
+            return cacheMap.put(annotation.annotationType(), annotation) != null;
         }
-        // 记录这个注解
-        return set.add(annotation);
     }
 
 
@@ -432,6 +437,25 @@ public class AnnotationUtil {
      */
     public static void cleanCache() {
         ANNOTATION_CACHE.clear();
+        NULL_CACHE.clear();
     }
+
+
+    /**
+     * 重置annotation lru map的最大值。
+     * @param capacity
+     */
+    public static void setAnnotationCacheCapacity(int capacity) {
+        ANNOTATION_CACHE.setCapacity(capacity);
+    }
+
+    /**
+     * 重置null annotation lru map的最大值。
+     * @param capacity
+     */
+    public static void setNullAnnotationCacheCapacity(int capacity) {
+        NULL_CACHE.setCapacity(capacity);
+    }
+
 
 }

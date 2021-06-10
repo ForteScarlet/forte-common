@@ -23,7 +23,9 @@ internal class MergedIterator<T>(
 
     /**
      * if `true`, use it1.
+     *
      * if `false`, use it2.
+     *
      * if `null`, no more next.
      */
     private var whichOne: Boolean? = reFlashWhichOne()
@@ -50,7 +52,7 @@ internal class MergedIterator<T>(
         return when(whichOne) {
             true -> it1.next()
             false -> it2.next()
-            else -> throw NoSuchElementException("no more next.")
+            else -> throw NoSuchElementException("No more element.")
         }
     }
 }

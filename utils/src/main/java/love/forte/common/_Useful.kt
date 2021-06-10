@@ -58,5 +58,6 @@ public inline fun <reified T> ifOr(it: Any, orDef: T): T = if (it is T) it else 
 
 
 public inline fun <reified T, K> listAs(list: List<K>): List<T>? {
+    @Suppress("UNCHECKED_CAST")
     return if (list.all { it is T }) list as List<T> else null
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2020. ForteScarlet All rights reserved.
  * Project  parent
- * File     Beans.java
+ * File     SpareBeans.java
  *
  * You can contact the author through the following channels:
  * github https://github.com/ForteScarlet
@@ -12,19 +12,22 @@
 
 package love.forte.common.ioc.annotation;
 
+import love.forte.common.utils.annotation.AnnotateMapping;
 
 import java.lang.annotation.*;
 
 /**
  *
- * 标记一个类或者一个类下有返回值的方法上，使它们注入到依赖管理中。
+ * 备用Beans，即默认优先级为最低级的 {@link Beans}。
  *
  * @author <a href="https://github.com/ForteScarlet"> ForteScarlet </a>
  */
 @Retention(RetentionPolicy.RUNTIME)    //注解会在class字节码文件中存在，在运行时可以通过反射获取到
 @Target({ElementType.TYPE, ElementType.METHOD}) //接口、类、枚举、注解、方法
 @Documented
-public @interface Beans {
+@Beans
+@AnnotateMapping(value = Beans.class)
+public @interface SpareBeans {
 
     /** 依赖对象的名称，如果没有则以类名取代 */
     String value() default "";
@@ -41,10 +44,7 @@ public @interface Beans {
     Depend depend() default @Depend;
 
 
-    /**
-     * 根据参数类型列表来指定构造函数，默认为无参构造。仅标注在类上的时候有效
-     *  TODO 待实现
-     */
+    /** 根据参数类型列表来指定构造函数，默认为无参构造。仅标注在类上的时候有效 */
     Class[] constructor() default {};
 
     /**
@@ -52,10 +52,11 @@ public @interface Beans {
      */
     boolean init() default false;
 
+
     /**
      * 优先级。当在获取某个依赖的时候，假如在通过类型获取的时候存在多个值，会获取优先级更高级别的依赖并摒弃其他依赖。
-     * 升序排序。90。
+     * 升序排序。最大值，即最小优先级。
      */
-    int priority() default 90;
+    int priority() default Integer.MAX_VALUE;
 
 }

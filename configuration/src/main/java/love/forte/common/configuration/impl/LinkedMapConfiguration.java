@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * 基于 HashMap的 {@link Configuration} 基础实现类
@@ -41,7 +42,9 @@ public class LinkedMapConfiguration extends LinkedHashMap<String, ConfigurationP
     }
 
     public LinkedMapConfiguration(Map<? extends String, ? extends ConfigurationProperty> m) {
-        super(m);
+        super(m.entrySet().stream()
+                .map(e -> new SimpleEntry<String, ConfigurationProperty>(resetKey(e.getKey()), e.getValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
     }
 
     public LinkedMapConfiguration(int initialCapacity, float loadFactor, boolean accessOrder) {
@@ -64,7 +67,7 @@ public class LinkedMapConfiguration extends LinkedHashMap<String, ConfigurationP
     /**
      * 将 `aaa.bbb.ccc-ddd` 的格式转化为 `aaa.bbb.cccDdd`
      */
-    private String resetKey(String key) {
+    private static String resetKey(String key) {
         if (key.contains("-")) {
             final String[] split = key.split("-");
             StringBuilder sb = new StringBuilder();

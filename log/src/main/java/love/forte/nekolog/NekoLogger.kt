@@ -14,10 +14,7 @@ package love.forte.nekolog
 
 import org.slf4j.event.Level
 import org.slf4j.helpers.MarkerIgnoringBase
-import sun.reflect.CallerSensitive
 import java.io.PrintStream
-
-
 
 
 /**
@@ -31,6 +28,13 @@ open class NekoLogger(
     private val msgFormatter: LoggerFormatter,
     config: NekoLogConfiguration
 ) : MarkerIgnoringBase() {
+
+    private val originalLogName: String = logName
+
+    init {
+        // init log name max length.
+        logName.toLogName()
+    }
 
     protected open val stackable: Boolean = config.enableStack
     protected open val threadAble: Boolean = config.enableThread
@@ -53,7 +57,7 @@ open class NekoLogger(
      * Return the name of this `Logger` instance.
      * @return name of this logger instance
      */
-    override fun getName(): String = logName
+    override fun getName(): String = originalLogName
 
     private fun log(msg: String?, level: Level, printStream: PrintStream, err: Throwable?, vararg args: Any?) {
         val th: Thread? = if (threadAble) Thread.currentThread() else null
@@ -185,7 +189,7 @@ open class NekoLogger(
     }
 
     override fun debug(format: String?, vararg arguments: Any?) {
-        log(format, Level.DEBUG, debugPrint, null, arguments)
+        log(format, Level.DEBUG, debugPrint, null, *arguments)
     }
 
     override fun debug(msg: String?, t: Throwable?) {

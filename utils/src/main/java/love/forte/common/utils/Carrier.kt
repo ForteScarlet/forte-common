@@ -9,6 +9,8 @@
  * email  ForteScarlet@163.com
  * QQ     1149159218
  */
+
+
 @file:JvmName("Carriers")
 package love.forte.common.utils
 
@@ -18,14 +20,18 @@ import java.util.*
  * 一个类似于 java 的 [java.util.Optional] 类,
  * 提供一些简单的api来对一个可能为null的值进行操作。
  *
+ * 使用静态方法 [Carrier.get] 来获取一个实例，或使用 [Carrier.empty] 获取一个内容为null的空实例。
+ *
  * 其中的大部分方法为 `inline` 方法，能够有效提高kotlin代码对其调用时的效率。（大概
  *
  * 其代表了一个 **回执**, 而这个回执不确定其是否为 `null`。
  *
+ *
  */
 @Suppress("UNCHECKED_CAST")
-public data class Carrier<T>(private val value: T?) {
-    /** 转化为java8的 [java.util.Optional] */
+public data class Carrier<T>
+internal constructor(private val value: T?) {
+    /** 转化为java8的 [java.util.Optional]。 */
     public fun toOptional(): Optional<T> = Optional.ofNullable(value)
 
     /**
@@ -73,7 +79,7 @@ public data class Carrier<T>(private val value: T?) {
     /**
      * 如果值不为null，则进行转化
      */
-    public inline fun <R> map(mapper: (T) -> R): Carrier<R> = orNull()?.let { Carrier(mapper(it)) } ?: empty()
+    public inline fun <R> map(mapper: (T) -> R): Carrier<R> = orNull()?.let { mapper(it).toCarrier() } ?: empty()
 
 
     /**
@@ -116,7 +122,6 @@ internal val EmptyStringCarrier: Carrier<String> = Carrier("")
 /**
  * 将一个任意的值转化为 [Carrier]
  */
-@Suppress("RedundantVisibilityModifier")
 public fun <T> T?.toCarrier(): Carrier<T> = Carrier.get(this)
 
 
