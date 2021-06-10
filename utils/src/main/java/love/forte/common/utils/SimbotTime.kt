@@ -30,7 +30,8 @@ import java.util.concurrent.TimeUnit
  * ```
  * 你也可以直接通过函数 [now] 来得到当前时间的 [Time] 值。
  */
-public inline class Time(val time: Long) {
+@JvmInline
+public value class Time(val time: Long) {
     private val unit: TimeUnit get() = TimeUnit.MILLISECONDS
     fun toNanos(): Long = unit.toNanos(time)
     fun toMicros(): Long = unit.toMicros(time)

@@ -53,7 +53,7 @@ internal constructor(
      * 总数量
      */
     override val size: Int
-        get() = sortedMap.values.sumBy { it.size }
+        get() = sortedMap.values.sumOf { it.size }
 
 
     override fun isEmpty(): Boolean = sortedMap.isEmpty()
