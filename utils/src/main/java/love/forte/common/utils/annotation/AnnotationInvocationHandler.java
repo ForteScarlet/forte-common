@@ -119,11 +119,11 @@ public class AnnotationInvocationHandler implements InvocationHandler {
                     }
 
                     boolean isExceptionProxy;
-                    // if (GREATER_THAN_8) {
-                    //     isExceptionProxy = _exceptionProxyType.isAssignableFrom(value.getClass())  && exceptionProxyGenerateException != null;
-                    // } else {
-                    isExceptionProxy = value instanceof ExceptionProxy && exceptionProxyGenerateException != null;
-                    // }
+                    if (GREATER_THAN_8) {
+                        isExceptionProxy = _exceptionProxyType.isAssignableFrom(value.getClass()) && exceptionProxyGenerateException != null;
+                    } else {
+                        isExceptionProxy = value instanceof ExceptionProxy && exceptionProxyGenerateException != null;
+                    }
 
                     if (isExceptionProxy) {
                         try {
