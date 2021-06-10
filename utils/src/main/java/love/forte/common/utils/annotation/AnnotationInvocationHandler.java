@@ -37,16 +37,37 @@ public class AnnotationInvocationHandler implements InvocationHandler {
     private transient volatile Method[] memberMethods = null;
     private static Method exceptionProxyGenerateException;
 
+    @SuppressWarnings({"AlibabaConstantFieldShouldBeUpperCase", "AlibabaAvoidStartWithDollarAndUnderLineNaming"})
+    private static final Class<?> _exceptionProxyType;
+    private static final boolean GREATER_THAN_8;
 
     static {
-        Method exceptionProxyGenerateException;
-        try {
-            final Class<?> exceptionProxyClass = Class.forName("sun.reflect.annotation.ExceptionProxy");
-            exceptionProxyGenerateException = exceptionProxyClass.getDeclaredMethod("generateException");
-        }catch (Exception e){
-            exceptionProxyGenerateException = null;
+        String jdkVersion = System.getProperty("java.version");
+        //noinspection AlibabaUndefineMagicConstant
+        if (jdkVersion.contains("1.8")) {
+            GREATER_THAN_8 = false;
+        } else {
+            //noinspection AlibabaUndefineMagicConstant
+            if (jdkVersion.matches("\\d+")) {
+                int versionNumber = Integer.parseInt(jdkVersion);
+                GREATER_THAN_8 = versionNumber > 8;
+            } else {
+                GREATER_THAN_8 = false;
+            }
         }
+
+
+        Class<?> exceptionProxyClass = null;
+        Method exceptionProxyGenerateException = null;
+        try {
+            exceptionProxyClass = Class.forName("sun.reflect.annotation.ExceptionProxy");
+            exceptionProxyGenerateException = exceptionProxyClass.getDeclaredMethod("generateException");
+        } catch (Throwable ignore) {
+        }
+
         AnnotationInvocationHandler.exceptionProxyGenerateException = exceptionProxyGenerateException;
+        _exceptionProxyType = exceptionProxyClass;
+
     }
 
     <T extends Annotation> AnnotationInvocationHandler(Class<T> annotationType, Map<String, Object> memberValues, Annotation baseAnnotation) {
@@ -85,29 +106,37 @@ public class AnnotationInvocationHandler implements InvocationHandler {
                 default:
                     Object value = this.memberValues.get(name);
                     if (value == null) {
-                        if(baseAnnotation != null) {
+                        if (baseAnnotation != null) {
                             return method.invoke(baseAnnotation);
                         }
 
                         final Object defaultValue = method.getDefaultValue();
-                        if(defaultValue != null){
+                        if (defaultValue != null) {
                             return defaultValue;
                         }
 
                         throw new IncompleteAnnotationException(this.type, name);
-                    } else if (value instanceof ExceptionProxy && exceptionProxyGenerateException != null) {
+                    }
+
+                    boolean isExceptionProxy;
+                    // if (GREATER_THAN_8) {
+                    //     isExceptionProxy = _exceptionProxyType.isAssignableFrom(value.getClass())  && exceptionProxyGenerateException != null;
+                    // } else {
+                    isExceptionProxy = value instanceof ExceptionProxy && exceptionProxyGenerateException != null;
+                    // }
+
+                    if (isExceptionProxy) {
                         try {
                             throw (RuntimeException) exceptionProxyGenerateException.invoke(value);
-                        }catch (Exception e){
+                        } catch (Throwable e) {
                             throw new RuntimeException("An ExceptionProxy. " + this.type);
                         }
-                    } else {
-                        if (value.getClass().isArray() && Array.getLength(value) != 0) {
-                            value = this.cloneArray(value);
-                        }
-
-                        return value;
                     }
+                    if (value.getClass().isArray() && Array.getLength(value) != 0) {
+                        value = this.cloneArray(value);
+                    }
+
+                    return value;
             }
 
         }
