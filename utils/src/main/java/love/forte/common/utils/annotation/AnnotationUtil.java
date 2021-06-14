@@ -23,7 +23,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 /**
  * 对于一些注解的获取等相关的工具类。
@@ -106,7 +106,7 @@ public class AnnotationUtil {
      * @return 获取到的第一个注解对象
      */
     public static <T extends Annotation> T getAnnotation(AnnotatedElement from, Class<T> annotationType) {
-        return getAnnotation(from, annotationType, (Class<T>[]) new Class[]{});
+        return getAnnotation(from, annotationType, (Class<T>[]) new Class[0]);
     }
 
     /**
@@ -151,28 +151,76 @@ public class AnnotationUtil {
             return cache;
         }
 
+
         if (isNull(from, annotationType)) {
             return null;
         }
+
+        // 可重复注解
 
 
         //先尝试直接获取
         T annotation = from.getAnnotation(annotationType);
 
+        // 寻找 MixRepeatableAnnotations标记
+        boolean mix;
+        if (MixRepeatableAnnotations.class.equals(annotationType)) {
+            mix = false;
+        } else {
+            mix = containsAnnotation(from, MixRepeatableAnnotations.class);
+        }
+        Class<? extends Annotation> childrenValueAnnotateType;
         //如果存在直接返回，否则查询
         if (annotation != null) {
-            return mappingAndSaveCache(fromInstance, from, annotation);
+            if (!mix) {
+                // 如果不需要混合, 不管如何都直接返回
+                return mappingAndSaveCache(fromInstance, from, annotation);
+            } else {
+                // 如果需要混合，看看是否是可重复注解。
+                childrenValueAnnotateType = repeatableChildType(annotationType);
+                if (childrenValueAnnotateType != null) {
+                    // repeatable
+                    // 得到annotation的value值，里面是真正的数组
+                    Object value = getAnnotationProperty(
+                            annotation,
+                            "value",
+                            rt -> rt.isArray() && rt.getComponentType().equals(childrenValueAnnotateType)
+                    );
+                    if (value != null) {
+                        Annotation[] childrenArray = (Annotation[]) value;
+                        // 有value, 获取额外的annotation，合并然后返回
+                        List<Annotation> annotationList = repeatChildrenFromAnnotationArray(from, childrenValueAnnotateType, from.getAnnotations());
+                        annotationList.addAll(0, Arrays.asList(childrenArray));
+
+                        // 查询完了，如果存在内容，构建参数
+                        if (!annotationList.isEmpty()) {
+                            final Object childrenValueAnnotateArray = Array.newInstance(childrenValueAnnotateType, annotationList.size());
+                            for (int i = 0; i < annotationList.size(); i++) {
+                                Array.set(childrenValueAnnotateArray, i, annotationList.get(i));
+                            }
+                            Map<String, Object> map = new HashMap<>(1);
+                            map.put("value", childrenValueAnnotateArray);
+
+                            annotation = AnnotationProxyUtil.proxy(annotationType, map);
+                        }
+
+                    }
+
+                }
+
+                return mappingAndSaveCache(fromInstance, from, annotation);
+            }
         }
 
 
         // 获取target注解
         Target target = annotationType.getAnnotation(Target.class);
         // 判断这个注解能否标注在其他注解上，如果不能，则不再深入获取
-        boolean annotable = false;
+        boolean annotateAble = false;
         if (target != null) {
             for (ElementType elType : target.value()) {
                 if (elType == ElementType.TYPE || elType == ElementType.ANNOTATION_TYPE) {
-                    annotable = true;
+                    annotateAble = true;
                     break;
                 }
             }
@@ -181,48 +229,58 @@ public class AnnotationUtil {
         // 如果是一个可重复类型的注解, 并且无法直接获得, 则从当前的全部注解中寻找他的所有子类并构建一个代理。
 
         // 判断是否为某可重复注解的复数注解
-        boolean repeatable = false;
+
         // 如果是可重复型, 此为其子类型
-        Class<? extends Annotation> childrenValueAnnotateType = null;
-        try {
-            Method valueMethod = annotationType.getMethod("value");
-            final Class<?> valueMethodReturnType = valueMethod.getReturnType();
-            if (valueMethodReturnType.isArray()) {
-                final Class<?> valueArrayType = valueMethodReturnType.getComponentType();
-                if (valueArrayType.isAnnotation()) {
-                    Class<? extends Annotation> valueArrayTypeForAnnotation = (Class<? extends Annotation>) valueArrayType;
-                    // is annotation
-                    Repeatable repeatableAnnotate = valueArrayTypeForAnnotation.getAnnotation(Repeatable.class);
-                    // 如果value的返回值
-                    if (repeatableAnnotate != null && repeatableAnnotate.value().equals(annotationType)) {
-                        repeatable = true;
-                        childrenValueAnnotateType = valueArrayTypeForAnnotation;
-                    }
-                }
-            }
-        } catch (NoSuchMethodException ignored1) { }
+        // Class<? extends Annotation> childrenValueAnnotateType = null;
+
+        childrenValueAnnotateType = repeatableChildType(annotationType);
+
+        boolean repeatable = childrenValueAnnotateType != null;
+
+        // try {
+        //     Method valueMethod = annotationType.getMethod("value");
+        //     final Class<?> valueMethodReturnType = valueMethod.getReturnType();
+        //     if (valueMethodReturnType.isArray()) {
+        //         final Class<?> valueArrayType = valueMethodReturnType.getComponentType();
+        //         if (valueArrayType.isAnnotation()) {
+        //             Class<? extends Annotation> valueArrayTypeForAnnotation = (Class<? extends Annotation>) valueArrayType;
+        //             // is annotation
+        //             Repeatable repeatableAnnotate = valueArrayTypeForAnnotation.getAnnotation(Repeatable.class);
+        //             // 如果value的返回值
+        //             if (repeatableAnnotate != null && repeatableAnnotate.value().equals(annotationType)) {
+        //                 repeatable = true;
+        //                 childrenValueAnnotateType = valueArrayTypeForAnnotation;
+        //             }
+        //         }
+        //     }
+        // } catch (NoSuchMethodException ignored1) { }
 
         Annotation[] annotations = from.getAnnotations();
 
         if (!repeatable) {
             // 不是可重复注解的父类类型, 递归查询
-            annotation = annotable ? getAnnotationFromArrays(fromInstance, annotations, annotationType, ignored) : null;
+            annotation = annotateAble ? getAnnotationFromArrays(fromInstance, annotations, annotationType, ignored) : null;
         } else {
-            List<Annotation> annotationList = new ArrayList<>();
+            // 是可重复注解，寻找 MixRepeatableAnnotations标记
+            // boolean mix = containsAnnotation(from, MixRepeatableAnnotations.class);
 
-            // 先尝试直接获取
-            Annotation getForm = from.getAnnotation(childrenValueAnnotateType);
-            if(getForm != null) {
-                annotationList.add(getForm);
-            }
+            // List<Annotation> annotationList = new ArrayList<>();
+            //
+            // // 先尝试直接获取
+            // Annotation getForm = from.getAnnotation(childrenValueAnnotateType);
+            // if(getForm != null) {
+            //     annotationList.add(getForm);
+            // }
+            //
+            // // 是可重复注解的父类类型, 得到他对应的子类注解类型.
+            // for (Annotation annotate : annotations) {
+            //     final Annotation getAnnotation = getAnnotation(annotate, annotate.annotationType(), childrenValueAnnotateType);
+            //     if (getAnnotation != null) {
+            //         annotationList.add(getAnnotation);
+            //     }
+            // }
 
-            // 是可重复注解的父类类型, 得到他对应的子类注解类型.
-            for (Annotation annotate : annotations) {
-                final Annotation getAnnotation = getAnnotation(annotate, annotate.annotationType(), childrenValueAnnotateType);
-                if (getAnnotation != null) {
-                    annotationList.add(getAnnotation);
-                }
-            }
+            List<Annotation> annotationList = repeatChildrenFromAnnotationArray(from, childrenValueAnnotateType, annotations);
 
             // 查询完了，如果存在内容，构建参数
             if (!annotationList.isEmpty()) {
@@ -256,6 +314,7 @@ public class AnnotationUtil {
      * @param <T>
      * @return
      */
+    @SuppressWarnings("unchecked")
     @SafeVarargs
     private static <T extends Annotation> T getAnnotationFromArrays(Annotation from, Annotation[] array, Class<T> annotationType, Class<T>... ignored) {
         //先浅查询第一层
@@ -321,6 +380,7 @@ public class AnnotationUtil {
      * @param annotatedType 注解类型
      * @return 注解缓存，可能为null
      */
+    @SuppressWarnings("unchecked")
     private static <T extends Annotation> T getCache(AnnotatedElement from, Class<T> annotatedType) {
         Map<Class<? extends Annotation>, Annotation> cacheMap = ANNOTATION_CACHE.get(from);
         if (cacheMap != null) {
@@ -366,13 +426,13 @@ public class AnnotationUtil {
     /**
      * 记录一条缓存记录。
      */
-    private static boolean saveCache(AnnotatedElement from, Annotation annotation) {
+    private static void saveCache(AnnotatedElement from, Annotation annotation) {
         Map<Class<? extends Annotation>, Annotation> cacheMap;
         synchronized (ANNOTATION_CACHE) {
             // 如果为空，新建一个并保存
             cacheMap = ANNOTATION_CACHE.computeIfAbsent(from, k -> new LinkedHashMap<>());
             // 记录这个注解
-            return cacheMap.put(annotation.annotationType(), annotation) != null;
+            cacheMap.put(annotation.annotationType(), annotation);
         }
     }
 
@@ -418,6 +478,41 @@ public class AnnotationUtil {
         return AnnotationProxyUtil.proxy(toType, to, params);
     }
 
+
+    /**
+     * 获取任意注解的任意参数，如果有的话。
+     *
+     * @param annotation   注解
+     * @param propertyName 参数名
+     * @param returnTypeCheck 验证其返回值类型
+     * @return real properties value or null.
+     */
+    public static Object getAnnotationProperty(Annotation annotation, String propertyName, Predicate<Class<?>> returnTypeCheck) {
+        Objects.requireNonNull(propertyName, "Parameter propertyName cannot be null.");
+
+        if (annotation instanceof AnnotationInvocationHandler) {
+            return ((AnnotationInvocationHandler) annotation).get(propertyName);
+        }
+
+        try {
+            Class<? extends Annotation> annotationType = annotation.annotationType();
+            Method[] methods = annotationType.getMethods();
+            for (Method method : methods) {
+                if (method.getName().equals(propertyName)) {
+                    if (returnTypeCheck.test(method.getReturnType())) {
+                        return method.invoke(annotation);
+                    } else {
+                        return null;
+                    }
+                }
+            }
+        } catch (InvocationTargetException | IllegalAccessException ignore) {
+        }
+        return null;
+
+    }
+
+
     /**
      * 进行注解值映射，并缓存，返回
      */
@@ -443,6 +538,7 @@ public class AnnotationUtil {
 
     /**
      * 重置annotation lru map的最大值。
+     *
      * @param capacity
      */
     public static void setAnnotationCacheCapacity(int capacity) {
@@ -451,11 +547,65 @@ public class AnnotationUtil {
 
     /**
      * 重置null annotation lru map的最大值。
+     *
      * @param capacity
      */
     public static void setNullAnnotationCacheCapacity(int capacity) {
         NULL_CACHE.setCapacity(capacity);
     }
 
+
+    /**
+     * 得到可重复注解的子类型。 如果为非可重复类型，得到null，
+     *
+     * @param annotationType 疑似可重复注解的类型。
+     * @param <T>            Annotation
+     * @return childAnnotationType
+     */
+    private static <T extends Annotation> Class<? extends Annotation> repeatableChildType(Class<T> annotationType) {
+        // 判断是否为某可重复注解的复数注解
+        // 如果是可重复型, 此为其子类型
+        Class<? extends Annotation> childValueAnnotateType = null;
+        try {
+            Method valueMethod = annotationType.getMethod("value");
+            final Class<?> valueMethodReturnType = valueMethod.getReturnType();
+            if (valueMethodReturnType.isArray()) {
+                final Class<?> valueArrayType = valueMethodReturnType.getComponentType();
+                if (valueArrayType.isAnnotation()) {
+                    Class<? extends Annotation> valueArrayTypeForAnnotation = (Class<? extends Annotation>) valueArrayType;
+                    // is annotation
+                    Repeatable repeatableAnnotate = valueArrayTypeForAnnotation.getAnnotation(Repeatable.class);
+                    // 如果value的返回值
+                    if (repeatableAnnotate != null && repeatableAnnotate.value().equals(annotationType)) {
+                        childValueAnnotateType = valueArrayTypeForAnnotation;
+                    }
+                }
+            }
+        } catch (NoSuchMethodException ignored) {
+        }
+
+        return childValueAnnotateType;
+    }
+
+
+    private static <T extends Annotation> List<Annotation> repeatChildrenFromAnnotationArray(AnnotatedElement from, Class<T> childrenValueAnnotateType, Annotation[] annotations) {
+        List<Annotation> annotationList = new ArrayList<>();
+
+        // 先尝试直接获取
+        Annotation getForm = from.getAnnotation(childrenValueAnnotateType);
+        if (getForm != null) {
+            annotationList.add(getForm);
+        }
+
+        // 是可重复注解的父类类型, 得到他对应的子类注解类型.
+        for (Annotation annotate : annotations) {
+            final Annotation getAnnotation = getAnnotation(annotate, annotate.annotationType(), childrenValueAnnotateType);
+            if (getAnnotation != null) {
+                annotationList.add(getAnnotation);
+            }
+        }
+
+        return annotationList;
+    }
 
 }

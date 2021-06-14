@@ -1092,8 +1092,8 @@ constructor(
      */
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> getListByType(type: Class<T>): MutableCollection<out T> {
-        // 如果没有父类，则说明其为基类，不再过滤，返回所有结果
-        return if (type.superclass == null) {
+        // 如果为基类，不再过滤，返回所有结果
+        return if (!type.isInterface && type == Any::class.java) {
             nameResourceWarehouse.values.map { it.instanceSupplier(this) } as MutableCollection<out T>
         } else {
             nameResourceWarehouse.values.asSequence().filter {
@@ -1108,7 +1108,7 @@ constructor(
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> getListByTypeWithName(type: Class<T>): MutableMap<String, out T> {
         // 如果没有父类，则说明其为基类，不再过滤，返回所有结果
-        return if (type.superclass == null) {
+        return if (!type.isInterface && type == Any::class.java) {
             nameResourceWarehouse.map { (k, v) -> k to v.instanceSupplier(this) }.toMap()
                 .toMutableMap() as MutableMap<String, out T>
         } else {
