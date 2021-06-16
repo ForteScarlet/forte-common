@@ -6,7 +6,8 @@ package love.forte.common.collections
  * Lru map 最基础的实现。
  *
  */
-public class LRULinkedHashMap<K, V> : LinkedHashMap<K, V> {
+@Deprecated("Use LRULinkedHashMap")
+public class _LRULinkedHashMap<K, V> : LinkedHashMap<K, V> {
     @Volatile
     var capacity: Int
 
