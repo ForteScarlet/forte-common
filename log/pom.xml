@@ -26,7 +26,6 @@
         <dependency>
             <groupId>love.forte.common</groupId>
             <artifactId>language</artifactId>
-            <version>${project.version}</version>
             <optional>true</optional>
         </dependency>
 
@@ -34,14 +33,12 @@
         <dependency>
             <groupId>love.forte.common</groupId>
             <artifactId>configuration</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <!-- utils -->
         <dependency>
             <groupId>love.forte.common</groupId>
             <artifactId>utils</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <!-- kt -->

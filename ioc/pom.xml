@@ -20,14 +20,12 @@
         <dependency>
             <groupId>love.forte.common</groupId>
             <artifactId>utils</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <!-- configuration -->
         <dependency>
             <groupId>love.forte.common</groupId>
             <artifactId>configuration</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>

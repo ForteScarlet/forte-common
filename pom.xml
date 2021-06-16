@@ -8,7 +8,7 @@
     <artifactId>common-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>1.0.0</version><!--cv-->
+    <version>1.0.1</version><!--cv-->
 
     <url>https://github.com/ForteScarlet/forte-common</url>
     <scm>
@@ -29,6 +29,7 @@
     </modules>
 
     <properties>
+        <forte-common.version>1.0.1</forte-common.version><!--cv-->
         <!--<editor-fold desc="encode prop">-->
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
@@ -74,31 +75,31 @@
             <dependency>
                 <groupId>love.forte.common</groupId>
                 <artifactId>utils</artifactId>
-                <version>${project.version}</version>
+                <version>${forte-common.version}</version>
             </dependency>
             <!-- common-log -->
             <dependency>
                 <groupId>love.forte.common</groupId>
                 <artifactId>log</artifactId>
-                <version>${project.version}</version>
+                <version>${forte-common.version}</version>
             </dependency>
             <!-- common-language -->
             <dependency>
                 <groupId>love.forte.common</groupId>
                 <artifactId>language</artifactId>
-                <version>${project.version}</version>
+                <version>${forte-common.version}</version>
             </dependency>
             <!-- common-configuration -->
             <dependency>
                 <groupId>love.forte.common</groupId>
                 <artifactId>configuration</artifactId>
-                <version>${project.version}</version>
+                <version>${forte-common.version}</version>
             </dependency>
             <!-- common-ioc -->
             <dependency>
                 <groupId>love.forte.common</groupId>
                 <artifactId>ioc</artifactId>
-                <version>${project.version}</version>
+                <version>${forte-common.version}</version>
             </dependency>
             <!--</editor-fold>-->
             <!--<editor-fold desc="kotlin dependencies">-->

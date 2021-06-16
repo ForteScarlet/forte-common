@@ -12,7 +12,6 @@
 
 package love.forte.common.utils.annotation;
 
-import sun.reflect.annotation.ExceptionProxy;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.AnnotationFormatError;
@@ -42,23 +41,30 @@ public class AnnotationInvocationHandler implements InvocationHandler {
     }
     @SuppressWarnings({"AlibabaConstantFieldShouldBeUpperCase", "AlibabaAvoidStartWithDollarAndUnderLineNaming"})
     private static final Class<?> _exceptionProxyType;
-    private static final boolean GREATER_THAN_8;
+    // private static final boolean GREATER_THAN_8;
 
     static {
-        String jdkVersion = System.getProperty("java.version");
-        //noinspection AlibabaUndefineMagicConstant
-        if (jdkVersion.contains("1.8")) {
-            GREATER_THAN_8 = false;
-        } else {
-            //noinspection AlibabaUndefineMagicConstant
-            if (jdkVersion.matches("\\d+")) {
-                int versionNumber = Integer.parseInt(jdkVersion);
-                GREATER_THAN_8 = versionNumber > 8;
-            } else {
-                GREATER_THAN_8 = false;
-            }
-        }
-
+        // boolean greaterThan8;
+        // try {
+        //     String jdkVersion = System.getProperty("java.version");
+        //     //noinspection AlibabaUndefineMagicConstant
+        //     if (jdkVersion.contains("1.8")) {
+        //         greaterThan8 = false;
+        //     } else {
+        //         //noinspection AlibabaUndefineMagicConstant
+        //         if (jdkVersion.matches("\\d+")) {
+        //             int versionNumber = Integer.parseInt(jdkVersion);
+        //             greaterThan8 = versionNumber > 8;
+        //         } else {
+        //             greaterThan8 = false;
+        //         }
+        //     }
+        // } catch (Throwable ignore) {
+        //     greaterThan8 = false;
+        // }
+        //
+        //
+        // GREATER_THAN_8 = greaterThan8;
 
         Class<?> exceptionProxyClass = null;
         Method exceptionProxyGenerateException = null;
@@ -122,15 +128,25 @@ public class AnnotationInvocationHandler implements InvocationHandler {
                     }
 
                     boolean isExceptionProxy;
-                    if (GREATER_THAN_8) {
+                    try {
                         isExceptionProxy = _exceptionProxyType.isAssignableFrom(value.getClass()) && exceptionProxyGenerateException != null;
-                    } else {
-                        isExceptionProxy = value instanceof ExceptionProxy && exceptionProxyGenerateException != null;
+                    } catch (Throwable e) {
+                        isExceptionProxy = false;
                     }
+
+                    // if (GREATER_THAN_8) {
+                    //     isExceptionProxy = _exceptionProxyType.isAssignableFrom(value.getClass()) && exceptionProxyGenerateException != null;
+                    // } else {
+                    //     try {
+                    //         isExceptionProxy = value instanceof sun.reflect.annotation.ExceptionProxy && exceptionProxyGenerateException != null;
+                    //     } catch (Throwable ignore){
+                    //         isExceptionProxy = false;
+                    //     }
+                    // }
 
                     if (isExceptionProxy) {
                         try {
-                            throw (RuntimeException) exceptionProxyGenerateException.invoke(value);
+                            throw (Throwable) exceptionProxyGenerateException.invoke(value);
                         } catch (Throwable e) {
                             throw new RuntimeException("An ExceptionProxy. " + this.type);
                         }
