@@ -3,12 +3,12 @@
 name: Test
 
 # Controls when the action will run. 
-on:
-  # Triggers the workflow on push or pull request events but only for the dev branch
-  push:
-    branches: [ \* ]
-  pull_request:
-    branches: [ \* ]
+on: push
+#   # Triggers the workflow on push or pull request events but only for the dev branch
+#   push:
+#     branches: [ \** ]
+#   pull_request:
+#     branches: [ * ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
