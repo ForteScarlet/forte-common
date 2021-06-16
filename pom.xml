@@ -53,20 +53,30 @@
         <!-- some version -->
         <fastjson.version>1.2.54</fastjson.version>
         <hutool.version>5.5.1</hutool.version>
-
-
     </properties>
 
+
     <dependencies>
-        <!-- some... -->
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test</artifactId>
             <scope>test</scope>
-            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test-junit5</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
+
 
     <!-- dependencyManagement -->
     <dependencyManagement>
@@ -125,11 +135,44 @@
                 <artifactId>kotlinx-coroutines-core</artifactId>
                 <version>${kotlinx.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlinx</groupId>
+                <artifactId>kotlinx-serialization-core</artifactId>
+                <version>${kotlinx-serialization.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlinx</groupId>
+                <artifactId>kotlinx-serialization-json</artifactId>
+                <version>${kotlinx-serialization.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlinx</groupId>
+                <artifactId>kotlinx-serialization-properties</artifactId>
+                <version>${kotlinx-serialization.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlinx</groupId>
+                <artifactId>kotlinx-serialization-cbor</artifactId>
+                <version>${kotlinx-serialization.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jetbrains.kotlinx</groupId>
+                <artifactId>kotlinx-serialization-hocon</artifactId>
+                <version>${kotlinx-serialization.version}</version>
+            </dependency>
+
 
             <!-- kt test -->
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-test</artifactId>
+                <version>${kotlin.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-test-junit5</artifactId>
                 <version>${kotlin.version}</version>
                 <scope>test</scope>
             </dependency>
@@ -253,51 +296,7 @@
 
     <!-- build plugins -->
     <build>
-        <!--<plugins>-->
-        <!--    &lt;!&ndash; compiler plugin &ndash;&gt;-->
-        <!--    <plugin>-->
-        <!--        <groupId>org.apache.maven.plugins</groupId>-->
-        <!--        <artifactId>maven-compiler-plugin</artifactId>-->
-        <!--    </plugin>-->
-        <!--    &lt;!&ndash; java源码 &ndash;&gt;-->
-        <!--    <plugin>-->
-        <!--        <groupId>org.apache.maven.plugins</groupId>-->
-        <!--        <artifactId>maven-source-plugin</artifactId>-->
-        <!--    </plugin>-->
-
-        <!--    <plugin>-->
-        <!--        <groupId>org.jetbrains.dokka</groupId>-->
-        <!--        <artifactId>dokka-maven-plugin</artifactId>-->
-        <!--    </plugin>-->
-
-        <!--    &lt;!&ndash; (1) deploy插件 &ndash;&gt;-->
-        <!--    <plugin>-->
-        <!--        <artifactId>maven-deploy-plugin</artifactId>-->
-        <!--    </plugin>-->
-        <!--    &lt;!&ndash; （2）sonatype的staging插件 &ndash;&gt;-->
-        <!--    <plugin>-->
-        <!--        <groupId>org.sonatype.plugins</groupId>-->
-        <!--        <artifactId>nexus-staging-maven-plugin</artifactId>-->
-        <!--    </plugin>-->
-        <!--    &lt;!&ndash; （3）SCM插件 &ndash;&gt;-->
-        <!--    <plugin>-->
-        <!--        <groupId>org.apache.maven.plugins</groupId>-->
-        <!--        <artifactId>maven-scm-plugin</artifactId>-->
-        <!--    </plugin>-->
-        <!--    &lt;!&ndash; （4）release插件，下面checkModificationExcludes是排除一些目录文件不要发布。 &ndash;&gt;-->
-        <!--    <plugin>-->
-        <!--        <groupId>org.apache.maven.plugins</groupId>-->
-        <!--        <artifactId>maven-release-plugin</artifactId>-->
-        <!--    </plugin>-->
-        <!--    &lt;!&ndash; GPG &ndash;&gt;-->
-        <!--    <plugin>-->
-        <!--        <groupId>org.apache.maven.plugins</groupId>-->
-        <!--        <artifactId>maven-gpg-plugin</artifactId>-->
-        <!--    </plugin>-->
-
-
         <!--</plugins>-->
-
         <plugins>
             <!-- compiler plugin -->
             <plugin>
@@ -308,6 +307,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.jetbrains.dokka</groupId>
@@ -374,46 +377,6 @@
                         </compilerArgs>
                     </configuration>
                 </plugin>
-                <!-- compiler plugin -->
-                <!--<plugin>-->
-                <!--    <groupId>org.apache.maven.plugins</groupId>-->
-                <!--    <artifactId>maven-compiler-plugin</artifactId>-->
-                <!--    <version>3.7.0</version>-->
-                <!--    <executions>-->
-                <!--        &lt;!&ndash; 替换会被 maven 特别处理的 default-compile &ndash;&gt;-->
-                <!--        <execution>-->
-                <!--            <id>default-compile</id>-->
-                <!--            <phase>none</phase>-->
-                <!--        </execution>-->
-                <!--        &lt;!&ndash; 替换会被 maven 特别处理的 default-testCompile &ndash;&gt;-->
-                <!--        <execution>-->
-                <!--            <id>default-testCompile</id>-->
-                <!--            <phase>none</phase>-->
-                <!--        </execution>-->
-                <!--        <execution>-->
-                <!--            <id>java-compile</id>-->
-                <!--            <phase>compile</phase>-->
-                <!--            <goals>-->
-                <!--                <goal>compile</goal>-->
-                <!--            </goals>-->
-                <!--        </execution>-->
-                <!--        <execution>-->
-                <!--            <id>java-test-compile</id>-->
-                <!--            <phase>test-compile</phase>-->
-                <!--            <goals>-->
-                <!--                <goal>testCompile</goal>-->
-                <!--            </goals>-->
-                <!--        </execution>-->
-                <!--    </executions>-->
-                <!--    <configuration>-->
-                <!--        <source>1.8</source>-->
-                <!--        <target>1.8</target>-->
-                <!--        <compilerArgs>-->
-                <!--            <arg>-parameters</arg>-->
-                <!--        </compilerArgs>-->
-                <!--    </configuration>-->
-                <!--</plugin>-->
-
                 <!-- java源码 -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
