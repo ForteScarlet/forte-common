@@ -14,6 +14,8 @@
 package love.forte.common.utils.scanner;
 
 
+import cn.hutool.core.collection.EnumerationIter;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.JarURLConnection;
@@ -21,14 +23,19 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
 
 
 /**
  * 资源文件扫描器。
+ *
+ * // 需要优化。
  *
  * @author ForteScarlet
  */
@@ -150,33 +157,52 @@ public class ResourcesScanner implements Scanner<String, URI> {
             URL url = classLoader.getResource(path);
             JarURLConnection jarURLConnection = (JarURLConnection) url.openConnection();
             jarFile = jarURLConnection.getJarFile();
-        } catch (NullPointerException | IOException e) {
+        } catch (NullPointerException | IOException | ClassCastException e) {
             throw new RuntimeException("Jar resource not found: " + path, e);
         }
 
-        // 遍历
-        jarFile.stream().forEach(jarEntry -> {
-            String jarEntryName = jarEntry.getName();
+        // jarFile
 
-            if (jarEntryName.contains(path) && !jarEntryName.equals(path + File.separator)) {
-                //递归遍历子目录
-                if (jarEntry.isDirectory()) {
-                    String jarFileName = jarEntry.getName();
-                    int endIndex = jarFileName.lastIndexOf(File.separator);
-                    String prefix;
-                    if (endIndex > 0) {
-                        prefix = jarFileName.substring(0, endIndex);
-                        set.addAll(findJar(prefix, filter));
-                    }
-                }else{
-                    final URI uri = URI.create(jarEntry.getName());
-                    //判断，如果符合，添加
-                    if (filter.test(uri)) {
-                        set.add(uri);
+        try {
+            // 遍历
+            Enumeration<JarEntry> entries = jarFile.entries();
+            for (JarEntry jarEntry : new EnumerationIter<>(entries)) {
+                String jarEntryName = jarEntry.getName();
+                if (!jarEntry.isDirectory() && (jarEntryName.contains(path) && !jarEntryName.equals(path + File.separator))) {
+                    // 不是目录，且符合要求
+                    URI entryUri = URI.create(jarEntry.getName());
+                    if (filter.test(entryUri)) {
+                        set.add(entryUri);
                     }
                 }
             }
-        });
+
+            // jarFile.stream().forEach(jarEntry -> {
+
+                // if (jarEntryName.contains(path) && !jarEntryName.equals(path + File.separator)) {
+                //     //递归遍历子目录
+                //     if (jarEntry.isDirectory()) {
+                //         String jarFileName = jarEntry.getName();
+                //         int endIndex = jarFileName.lastIndexOf(File.separator);
+                //         String prefix;
+                //         if (endIndex > 0) {
+                //             prefix = jarFileName.substring(0, endIndex);
+                //             set.addAll(findJar(prefix, filter));
+                //         }
+                //     }else{
+                //         final URI uri = URI.create(jarEntry.getName());
+                //         //判断，如果符合，添加
+                //         if (filter.test(uri)) {
+                //             set.add(uri);
+                //         }
+                //     }
+                // }
+            // });
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot open jar file " + jarFile + " from path " + path, e);
+        }
+
+
 
         return set;
     }
