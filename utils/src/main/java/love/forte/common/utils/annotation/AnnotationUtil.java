@@ -167,7 +167,7 @@ public class AnnotationUtil {
         if (MixRepeatableAnnotations.class.equals(annotationType)) {
             mix = false;
         } else {
-            mix = containsAnnotation(from, MixRepeatableAnnotations.class);
+            mix = containsAnnotation(annotationType, MixRepeatableAnnotations.class);
         }
         Class<? extends Annotation> childrenValueAnnotateType;
         //如果存在直接返回，否则查询
@@ -175,6 +175,7 @@ public class AnnotationUtil {
             if (!mix) {
                 // 如果不需要混合, 不管如何都直接返回
                 return mappingAndSaveCache(fromInstance, from, annotation);
+
             } else {
                 // 如果需要混合，看看是否是可重复注解。
                 childrenValueAnnotateType = repeatableChildType(annotationType);
@@ -198,10 +199,11 @@ public class AnnotationUtil {
                             for (int i = 0; i < annotationList.size(); i++) {
                                 Array.set(childrenValueAnnotateArray, i, annotationList.get(i));
                             }
-                            Map<String, Object> map = new HashMap<>(1);
-                            map.put("value", childrenValueAnnotateArray);
-
-                            annotation = AnnotationProxyUtil.proxy(annotationType, map);
+                            AnnotationValueUtil.setValue(annotation, "value", childrenValueAnnotateArray);
+                            // Map<String, Object> map = new HashMap<>(1);
+                            // map.put("value", childrenValueAnnotateArray);
+                            //
+                            // annotation = AnnotationProxyUtil.proxy(annotationType, map);
                         }
 
                     }
@@ -288,10 +290,11 @@ public class AnnotationUtil {
                 for (int i = 0; i < annotationList.size(); i++) {
                     Array.set(childrenValueAnnotateArray, i, annotationList.get(i));
                 }
-                Map<String, Object> map = new HashMap<>(1);
-                map.put("value", childrenValueAnnotateArray);
+                AnnotationValueUtil.setValue(annotation, "value", childrenValueAnnotateArray);
 
-                annotation = AnnotationProxyUtil.proxy(annotationType, map);
+                // Map<String, Object> map = new HashMap<>(1);
+                // map.put("value", childrenValueAnnotateArray);
+                // annotation = AnnotationProxyUtil.proxy(annotationType, map);
             }
         }
 

@@ -36,6 +36,10 @@ public class AnnotationInvocationHandler implements InvocationHandler {
     private transient volatile Method[] memberMethods = null;
     private static Method exceptionProxyGenerateException;
 
+    Map<String, Object> getMemberValuesMap() {
+        return memberValues;
+    }
+
     public Object get(String key) {
         return memberValues.get(key);
     }

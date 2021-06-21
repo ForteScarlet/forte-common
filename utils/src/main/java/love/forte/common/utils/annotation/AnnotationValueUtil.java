@@ -40,6 +40,10 @@ public class AnnotationValueUtil {
      */
     @SuppressWarnings("JavadocReference")
     private static <T extends Annotation> Map<String, Object> getValueMap(T annotation) {
+        if (annotation instanceof AnnotationInvocationHandler) {
+            return ((AnnotationInvocationHandler) annotation).getMemberValuesMap();
+        }
+
         InvocationHandler ih = Proxy.getInvocationHandler(annotation);
         final Class<? extends Annotation> annotationType = annotation.annotationType();
         // field
