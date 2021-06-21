@@ -47,7 +47,6 @@ public interface LoggerFormatter {
      */
     fun format(info: FormatterInfo, loggerNameReset: LoggerNameReset): String
 
-    @JvmDefault
     fun format(info: FormatterInfo): String = format(info, LoggerNameNotSet)
 
     /**

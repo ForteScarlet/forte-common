@@ -18,7 +18,6 @@ package love.forte.common.utils
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
 
 
 /**
@@ -79,7 +78,7 @@ public infix fun Number.timeBy(timeUnit: TimeUnit): Time = Time(timeUnit.toMilli
 public fun Number.secondToMill(): Long = TimeUnit.SECONDS.toMillis(toLong())
 
 @OptIn(ExperimentalTime::class)
-public fun Long.secondToMill2(): Long = this.seconds.toLongMilliseconds()
+public fun Long.secondToMill2(): Long = Duration.seconds(this).inWholeMilliseconds
 
 /**
  * 获取当前时间的 [Time] 类型
