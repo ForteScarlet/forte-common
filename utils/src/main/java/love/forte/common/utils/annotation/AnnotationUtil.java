@@ -290,11 +290,11 @@ public class AnnotationUtil {
                 for (int i = 0; i < annotationList.size(); i++) {
                     Array.set(childrenValueAnnotateArray, i, annotationList.get(i));
                 }
-                AnnotationValueUtil.setValue(annotation, "value", childrenValueAnnotateArray);
+                // AnnotationValueUtil.setValue(annotation, "value", childrenValueAnnotateArray);
 
-                // Map<String, Object> map = new HashMap<>(1);
-                // map.put("value", childrenValueAnnotateArray);
-                // annotation = AnnotationProxyUtil.proxy(annotationType, map);
+                Map<String, Object> map = new HashMap<>(1);
+                map.put("value", childrenValueAnnotateArray);
+                annotation = AnnotationProxyUtil.proxy(annotationType, map);
             }
         }
 
