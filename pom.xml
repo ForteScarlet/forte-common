@@ -8,7 +8,7 @@
     <artifactId>common-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>1.0.3</version><!--cv-->
+    <version>1.0.4</version><!--cv-->
 
     <url>https://github.com/ForteScarlet/forte-common</url>
     <scm>
@@ -29,7 +29,7 @@
     </modules>
 
     <properties>
-        <forte-common.version>1.0.3</forte-common.version><!--cv-->
+        <forte-common.version>1.0.4</forte-common.version><!--cv-->
         <!--<editor-fold desc="encode prop">-->
         <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>

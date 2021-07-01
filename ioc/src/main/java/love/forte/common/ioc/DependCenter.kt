@@ -485,10 +485,10 @@ constructor(
                     }
                     when {
                         // more than 1 with @Depend.
-                        constrListWithAnnotation.size > 1 -> throw IllegalConstrException("More than one constructor annotated by @Depend, but only need one.")
+                        constrListWithAnnotation.size > 1 -> throw IllegalConstrException("More than one constructor annotated by @Depend in $type. Must only one.")
 
                         // nothing.
-                        constrListWithAnnotation.isEmpty() -> throw IllegalConstrException("Multiple constructor exists but no constructor annotated by @Depend, but only need one.")
+                        constrListWithAnnotation.isEmpty() -> throw IllegalConstrException("Multiple constructor exists but no constructor annotated by @Depend in $type. Must need one.")
 
                         // only one.
                         else -> return constrInstance(constructors.first())
