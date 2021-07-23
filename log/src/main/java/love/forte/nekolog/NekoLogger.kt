@@ -148,7 +148,7 @@ open class NekoLogger(
      * @since 1.4
      */
     override fun trace(format: String?, vararg arguments: Any?) {
-        log(format, Level.TRACE, tracePrint, null, arguments)
+        log(format, Level.TRACE, tracePrint, null, *arguments)
     }
 
     /**
@@ -223,7 +223,7 @@ open class NekoLogger(
     }
 
     override fun info(format: String?, vararg arguments: Any?) {
-        log(format, Level.INFO, infoPrint, null, arguments)
+        log(format, Level.INFO, infoPrint, null, *arguments)
     }
 
     override fun info(msg: String?, t: Throwable?) {
@@ -252,7 +252,7 @@ open class NekoLogger(
     }
 
     override fun warn(format: String?, vararg arguments: Any?) {
-        log(format, Level.WARN, warnPrint, null, arguments)
+        log(format, Level.WARN, warnPrint, null, *arguments)
     }
 
     override fun warn(format: String?, arg1: Any?, arg2: Any?) {
@@ -289,7 +289,7 @@ open class NekoLogger(
     }
 
     override fun error(format: String?, vararg arguments: Any?) {
-        log(format, Level.ERROR, errPrint, null, arguments)
+        log(format, Level.ERROR, errPrint, null, *arguments)
     }
 
     override fun error(msg: String?, t: Throwable?) {

@@ -8,7 +8,7 @@
     <artifactId>common-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>1.0.4</version><!--cv-->
+    <version>1.0.5</version><!--cv-->
 
     <url>https://github.com/ForteScarlet/forte-common</url>
     <scm>

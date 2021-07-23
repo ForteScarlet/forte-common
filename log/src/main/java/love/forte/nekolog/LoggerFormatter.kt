@@ -166,7 +166,9 @@ object LanguageLoggerFormatter :
  */
 object NoLanguageLoggerFormatter : BaseLoggerFormatter({ text, args ->
     text?.let {
-        if (args.isEmpty()) it else toMessageFormat(it, Locale.getDefault()).format(args)
+        if (args.isEmpty()) it else {
+            toMessageFormat(it, Locale.getDefault()).format(args)
+        }
     } ?: "null"
 })
 
