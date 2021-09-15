@@ -26,6 +26,7 @@
         <module>language</module>
         <module>configuration</module>
         <module>log</module>
+        <module>converter</module>
     </modules>
 
     <properties>
@@ -334,6 +335,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
             </plugin>
         </plugins>
 
