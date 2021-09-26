@@ -1,5 +1,7 @@
 package love.forte.common.converter
 
+import org.jetbrains.annotations.TestOnly
+
 
 /**
  * 一个转化器。
@@ -29,7 +31,7 @@ public sealed interface Converter<T> {
 public interface ObjectConverter<T> : Converter<T>
 
 
-
+@TestOnly
 fun r(converter: Converter<*>) {
 
     when(converter) {

@@ -13,9 +13,14 @@
 package love.forte.common.utils.annotation;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.AnnotationTypeMismatchException;
+import java.lang.annotation.IncompleteAnnotationException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -45,24 +50,14 @@ public class AnnotationValueUtil {
         }
 
         InvocationHandler ih = Proxy.getInvocationHandler(annotation);
-        final Class<? extends Annotation> annotationType = annotation.annotationType();
-        // field
-        Field memberValuesField = FIELD_CACHE.computeIfAbsent(annotationType, k -> {
-            try {
-                return ih.getClass().getDeclaredField("memberValues");
-            } catch (NoSuchFieldException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        memberValuesField.setAccessible(true);
 
-        Map<String, Object> memberValues;
-        try {
-            memberValues = (Map<String, Object>) memberValuesField.get(ih);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+        if (ih instanceof AnnotationInvocationHandler) {
+            return ((AnnotationInvocationHandler) ih).getMemberValuesMap();
         }
-        return memberValues;
+
+        throw new IllegalStateException("Only Annotation instances represented by love.forte.common.utils.annotation.AnnotationInvocationHandler can get dynamic ValueMap.");
+
+
     }
 
     /**
@@ -71,8 +66,12 @@ public class AnnotationValueUtil {
      * @param annotation       注解
      * @param valueMapConsumer 注解的值
      */
-    public static <T extends Annotation> void setValue(T annotation, Consumer<Map<String, Object>> valueMapConsumer) {
-        valueMapConsumer.accept(getValueMap(annotation));
+    @org.jetbrains.annotations.Contract(pure = true)
+    public static <T extends Annotation> T setValue(T annotation, Consumer<Map<String, Object>> valueMapConsumer) {
+        T checkedAnnotation = checkAnnotationProxy(annotation);
+        Map<String, Object> valueMap = getValueMap(checkedAnnotation);
+        valueMapConsumer.accept(valueMap);
+        return checkedAnnotation;
     }
 
     /**
@@ -82,10 +81,35 @@ public class AnnotationValueUtil {
      * @param key        注解的key
      * @param value      要修改的值
      */
-    public static <T extends Annotation> void setValue(T annotation, String key, Object value) {
-        getValueMap(annotation).put(key, value);
+    @org.jetbrains.annotations.Contract(pure = true)
+    public static <T extends Annotation> T setValue(T annotation, String key, Object value) {
+        T checkedAnnotation = checkAnnotationProxy(annotation);
+        getValueMap(checkedAnnotation).put(key, value);
+        return checkedAnnotation;
     }
 
+
+    /**
+     * 如果这是一个普通的annotation，将其转化为经由 {@link AnnotationInvocationHandler} 代理的annotation。
+     *
+     * @param annotation 注解实例
+     */
+    static <T extends Annotation> T checkAnnotationProxy(T annotation) {
+        if (annotation instanceof AnnotationInvocationHandler) {
+            return annotation;
+        }
+
+        InvocationHandler ih = Proxy.getInvocationHandler(annotation);
+
+        if (ih instanceof AnnotationInvocationHandler) {
+            return annotation;
+        }
+
+        Annotation proxyAnnotation = AnnotationProxyUtil.proxy(annotation.annotationType(), annotation, new LinkedHashMap<>());
+
+        //noinspection unchecked
+        return (T) proxyAnnotation;
+    }
 
 }
 

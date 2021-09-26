@@ -162,6 +162,7 @@ public class AnnotationUtil {
         //先尝试直接获取
         T annotation = from.getAnnotation(annotationType);
 
+
         // 寻找 MixRepeatableAnnotations标记
         boolean mix;
         if (MixRepeatableAnnotations.class.equals(annotationType)) {
@@ -172,11 +173,10 @@ public class AnnotationUtil {
         Class<? extends Annotation> childrenValueAnnotateType;
         //如果存在直接返回，否则查询
         if (annotation != null) {
-            if (!mix) {
-                // 如果不需要混合, 不管如何都直接返回
-                return mappingAndSaveCache(fromInstance, from, annotation);
+            // 首先将其转化为对应的代理实例
+            annotation = AnnotationValueUtil.checkAnnotationProxy(annotation);
 
-            } else {
+            if (mix) {
                 // 如果需要混合，看看是否是可重复注解。
                 childrenValueAnnotateType = repeatableChildType(annotationType);
                 if (childrenValueAnnotateType != null) {
@@ -199,19 +199,17 @@ public class AnnotationUtil {
                             for (int i = 0; i < annotationList.size(); i++) {
                                 Array.set(childrenValueAnnotateArray, i, annotationList.get(i));
                             }
-                            AnnotationValueUtil.setValue(annotation, "value", childrenValueAnnotateArray);
-                            // Map<String, Object> map = new HashMap<>(1);
-                            // map.put("value", childrenValueAnnotateArray);
-                            //
-                            // annotation = AnnotationProxyUtil.proxy(annotationType, map);
+                            annotation = AnnotationValueUtil.setValue(annotation, "value", childrenValueAnnotateArray);
                         }
 
                     }
 
                 }
 
-                return mappingAndSaveCache(fromInstance, from, annotation);
             }
+            // 如果不需要混合, 不管如何都直接返回
+
+            return mappingAndSaveCache(fromInstance, from, annotation);
         }
 
 
@@ -239,49 +237,12 @@ public class AnnotationUtil {
 
         boolean repeatable = childrenValueAnnotateType != null;
 
-        // try {
-        //     Method valueMethod = annotationType.getMethod("value");
-        //     final Class<?> valueMethodReturnType = valueMethod.getReturnType();
-        //     if (valueMethodReturnType.isArray()) {
-        //         final Class<?> valueArrayType = valueMethodReturnType.getComponentType();
-        //         if (valueArrayType.isAnnotation()) {
-        //             Class<? extends Annotation> valueArrayTypeForAnnotation = (Class<? extends Annotation>) valueArrayType;
-        //             // is annotation
-        //             Repeatable repeatableAnnotate = valueArrayTypeForAnnotation.getAnnotation(Repeatable.class);
-        //             // 如果value的返回值
-        //             if (repeatableAnnotate != null && repeatableAnnotate.value().equals(annotationType)) {
-        //                 repeatable = true;
-        //                 childrenValueAnnotateType = valueArrayTypeForAnnotation;
-        //             }
-        //         }
-        //     }
-        // } catch (NoSuchMethodException ignored1) { }
-
         Annotation[] annotations = from.getAnnotations();
 
         if (!repeatable) {
             // 不是可重复注解的父类类型, 递归查询
             annotation = annotateAble ? getAnnotationFromArrays(fromInstance, annotations, annotationType, ignored) : null;
         } else {
-            // 是可重复注解，寻找 MixRepeatableAnnotations标记
-            // boolean mix = containsAnnotation(from, MixRepeatableAnnotations.class);
-
-            // List<Annotation> annotationList = new ArrayList<>();
-            //
-            // // 先尝试直接获取
-            // Annotation getForm = from.getAnnotation(childrenValueAnnotateType);
-            // if(getForm != null) {
-            //     annotationList.add(getForm);
-            // }
-            //
-            // // 是可重复注解的父类类型, 得到他对应的子类注解类型.
-            // for (Annotation annotate : annotations) {
-            //     final Annotation getAnnotation = getAnnotation(annotate, annotate.annotationType(), childrenValueAnnotateType);
-            //     if (getAnnotation != null) {
-            //         annotationList.add(getAnnotation);
-            //     }
-            // }
-
             List<Annotation> annotationList = repeatChildrenFromAnnotationArray(from, childrenValueAnnotateType, annotations);
 
             // 查询完了，如果存在内容，构建参数
@@ -311,11 +272,10 @@ public class AnnotationUtil {
 
 
     /**
-     * @param from           如果是来自与另一个注解的, 此处是来源。可以为null
-     * @param array
-     * @param annotationType
-     * @param <T>
-     * @return
+     * 从数组中获取指定注解实例。
+     * @param from 如果是来自与另一个注解的, 此处是来源。可以为null
+     * @param array 注解数组
+     * @param annotationType 注解类型
      */
     @SuppressWarnings("unchecked")
     @SafeVarargs
@@ -388,13 +348,6 @@ public class AnnotationUtil {
         Map<Class<? extends Annotation>, Annotation> cacheMap = ANNOTATION_CACHE.get(from);
         if (cacheMap != null) {
             return (T) cacheMap.get(annotatedType);
-            // synchronized (ANNOTATION_CACHE) {
-            //     for (Annotation a : list) {
-            //         if (a.annotationType().equals(annotatedType)) {
-            //             return (T) a;
-            //         }
-            //     }
-            // }
         }
         // 找不到，返回null
         return null;
@@ -407,7 +360,7 @@ public class AnnotationUtil {
      * @param annotatedType annotation class
      */
     private static <T extends Annotation> void nullCache(AnnotatedElement from, Class<T> annotatedType) {
-        final Set<Class<? extends Annotation>> classes = NULL_CACHE.computeIfAbsent(from, k -> new HashSet<>());
+        final Set<Class<? extends Annotation>> classes = NULL_CACHE.computeIfAbsent(from, k -> new LinkedHashSet<>());
         classes.add(annotatedType);
     }
 
@@ -466,9 +419,9 @@ public class AnnotationUtil {
                         name = method.getName();
                     }
                     try {
-                        if (!method.isAccessible()) {
-                            method.setAccessible(true);
-                        }
+                        // if (!method.canAccess()) {
+                        method.setAccessible(true);
+                        // }
 
                         Object value = method.invoke(from);
                         params.put(name, value);
@@ -485,8 +438,8 @@ public class AnnotationUtil {
     /**
      * 获取任意注解的任意参数，如果有的话。
      *
-     * @param annotation   注解
-     * @param propertyName 参数名
+     * @param annotation      注解
+     * @param propertyName    参数名
      * @param returnTypeCheck 验证其返回值类型
      * @return real properties value or null.
      */
@@ -542,7 +495,6 @@ public class AnnotationUtil {
     /**
      * 重置annotation lru map的最大值。
      *
-     * @param capacity
      */
     public static void setAnnotationCacheCapacity(int capacity) {
         ANNOTATION_CACHE.setCapacity(capacity);
@@ -551,7 +503,6 @@ public class AnnotationUtil {
     /**
      * 重置null annotation lru map的最大值。
      *
-     * @param capacity
      */
     public static void setNullAnnotationCacheCapacity(int capacity) {
         NULL_CACHE.setCapacity(capacity);

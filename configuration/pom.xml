@@ -5,7 +5,7 @@
     <parent>
         <groupId>love.forte.common</groupId>
         <artifactId>common-parent</artifactId>
-        <version>1.0.6</version><!--cv-->
+        <version>1.0.7</version><!--cv-->
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -15,7 +15,7 @@
     <description>forte-common configuration模块。</description>
 
     <properties>
-        <yaml-version>2.11.2</yaml-version>
+        <yaml-version>2.12.5</yaml-version>
     </properties>
 
     <dependencies>

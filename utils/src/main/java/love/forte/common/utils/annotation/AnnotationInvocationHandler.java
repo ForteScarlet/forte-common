@@ -1,15 +1,3 @@
-/*
- * Copyright (c) 2020. ForteScarlet All rights reserved.
- * Project  parent
- * File     AnnotationInvocationHandler.java
- *
- * You can contact the author through the following channels:
- * github https://github.com/ForteScarlet
- * gitee  https://gitee.com/ForteScarlet
- * email  ForteScarlet@163.com
- * QQ     1149159218
- */
-
 package love.forte.common.utils.annotation;
 
 
@@ -34,7 +22,6 @@ public class AnnotationInvocationHandler implements InvocationHandler {
     private final Annotation baseAnnotation;
 
     private transient volatile Method[] memberMethods = null;
-    private static Method exceptionProxyGenerateException;
 
     Map<String, Object> getMemberValuesMap() {
         return memberValues;
@@ -43,53 +30,21 @@ public class AnnotationInvocationHandler implements InvocationHandler {
     public Object get(String key) {
         return memberValues.get(key);
     }
-    @SuppressWarnings({"AlibabaConstantFieldShouldBeUpperCase", "AlibabaAvoidStartWithDollarAndUnderLineNaming"})
-    private static final Class<?> _exceptionProxyType;
-    // private static final boolean GREATER_THAN_8;
 
-    static {
-        // boolean greaterThan8;
-        // try {
-        //     String jdkVersion = System.getProperty("java.version");
-        //     //noinspection AlibabaUndefineMagicConstant
-        //     if (jdkVersion.contains("1.8")) {
-        //         greaterThan8 = false;
-        //     } else {
-        //         //noinspection AlibabaUndefineMagicConstant
-        //         if (jdkVersion.matches("\\d+")) {
-        //             int versionNumber = Integer.parseInt(jdkVersion);
-        //             greaterThan8 = versionNumber > 8;
-        //         } else {
-        //             greaterThan8 = false;
-        //         }
-        //     }
-        // } catch (Throwable ignore) {
-        //     greaterThan8 = false;
-        // }
-        //
-        //
-        // GREATER_THAN_8 = greaterThan8;
-
-        Class<?> exceptionProxyClass = null;
-        Method exceptionProxyGenerateException = null;
-        try {
-            exceptionProxyClass = Class.forName("sun.reflect.annotation.ExceptionProxy");
-            exceptionProxyGenerateException = exceptionProxyClass.getDeclaredMethod("generateException");
-        } catch (Throwable ignore) {
-        }
-
-        AnnotationInvocationHandler.exceptionProxyGenerateException = exceptionProxyGenerateException;
-        _exceptionProxyType = exceptionProxyClass;
-
-    }
-
-    <T extends Annotation> AnnotationInvocationHandler(Class<T> annotationType, Map<String, Object> memberValues, Annotation baseAnnotation) {
+    <T extends Annotation> AnnotationInvocationHandler(
+            Class<T> annotationType,
+            Map<String, Object> memberValues,
+            Annotation baseAnnotation
+    ) {
         this.type = annotationType;
         this.memberValues = memberValues;
         this.baseAnnotation = baseAnnotation;
     }
 
-    <T extends Annotation> AnnotationInvocationHandler(Class<T> annotationType, Map<String, Object> memberValues) {
+    <T extends Annotation> AnnotationInvocationHandler(
+            Class<T> annotationType,
+            Map<String, Object> memberValues
+    ) {
         this.type = annotationType;
         this.memberValues = memberValues;
         this.baseAnnotation = null;
@@ -131,30 +86,7 @@ public class AnnotationInvocationHandler implements InvocationHandler {
                         throw new IncompleteAnnotationException(this.type, name);
                     }
 
-                    boolean isExceptionProxy;
-                    try {
-                        isExceptionProxy = _exceptionProxyType.isAssignableFrom(value.getClass()) && exceptionProxyGenerateException != null;
-                    } catch (Throwable e) {
-                        isExceptionProxy = false;
-                    }
 
-                    // if (GREATER_THAN_8) {
-                    //     isExceptionProxy = _exceptionProxyType.isAssignableFrom(value.getClass()) && exceptionProxyGenerateException != null;
-                    // } else {
-                    //     try {
-                    //         isExceptionProxy = value instanceof sun.reflect.annotation.ExceptionProxy && exceptionProxyGenerateException != null;
-                    //     } catch (Throwable ignore){
-                    //         isExceptionProxy = false;
-                    //     }
-                    // }
-
-                    if (isExceptionProxy) {
-                        try {
-                            throw (Throwable) exceptionProxyGenerateException.invoke(value);
-                        } catch (Throwable e) {
-                            throw new RuntimeException("An ExceptionProxy. " + this.type);
-                        }
-                    }
                     if (value.getClass().isArray() && Array.getLength(value) != 0) {
                         value = this.cloneArray(value);
                     }
@@ -319,26 +251,33 @@ public class AnnotationInvocationHandler implements InvocationHandler {
         return builder.toString();
     }
 
-    private static String memberValueToString(Object var0) {
-        Class<?> var1 = var0.getClass();
-        if (!var1.isArray()) {
-            return var0.toString();
-        } else if (var1 == byte[].class) {
-            return Arrays.toString((byte[]) var0);
-        } else if (var1 == char[].class) {
-            return Arrays.toString((char[]) var0);
-        } else if (var1 == double[].class) {
-            return Arrays.toString((double[]) var0);
-        } else if (var1 == float[].class) {
-            return Arrays.toString((float[]) var0);
-        } else if (var1 == int[].class) {
-            return Arrays.toString((int[]) var0);
-        } else if (var1 == long[].class) {
-            return Arrays.toString((long[]) var0);
-        } else if (var1 == short[].class) {
-            return Arrays.toString((short[]) var0);
+    private static String memberValueToString(Object memberValue) {
+        if (memberValue == null) {
+            return "null";
+        }
+        Class<?> memberValueType = memberValue.getClass();
+        if (!memberValueType.isArray()) {
+            if (String.class.isAssignableFrom(memberValueType)) {
+                return "\"" + memberValue + "\"";
+            }
+
+            return memberValue.toString();
+        } else if (memberValueType == byte[].class) {
+            return Arrays.toString((byte[]) memberValue);
+        } else if (memberValueType == char[].class) {
+            return Arrays.toString((char[]) memberValue);
+        } else if (memberValueType == double[].class) {
+            return Arrays.toString((double[]) memberValue);
+        } else if (memberValueType == float[].class) {
+            return Arrays.toString((float[]) memberValue);
+        } else if (memberValueType == int[].class) {
+            return Arrays.toString((int[]) memberValue);
+        } else if (memberValueType == long[].class) {
+            return Arrays.toString((long[]) memberValue);
+        } else if (memberValueType == short[].class) {
+            return Arrays.toString((short[]) memberValue);
         } else {
-            return var1 == boolean[].class ? Arrays.toString((boolean[]) var0) : Arrays.toString((Object[]) var0);
+            return memberValueType == boolean[].class ? Arrays.toString((boolean[]) memberValue) : Arrays.toString((Object[]) memberValue);
         }
     }
 
