@@ -8,7 +8,7 @@
     <artifactId>common-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>1.0.7</version><!--cv-->
+    <version>1.1.0</version><!--cv-->
 
     <url>https://github.com/ForteScarlet/forte-common</url>
     <scm>
@@ -75,6 +75,18 @@
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-test-junit5</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>2.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>22.0.0</version>
+            <scope>compile</scope>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
