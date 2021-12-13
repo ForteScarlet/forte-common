@@ -13,6 +13,10 @@
 package love.forte.common.ioc.annotation;
 
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.annotation.AliasFor;
+import org.springframework.stereotype.Component;
+
 import java.lang.annotation.*;
 
 /**
@@ -24,10 +28,19 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)    //注解会在class字节码文件中存在，在运行时可以通过反射获取到
 @Target({ElementType.TYPE, ElementType.METHOD}) //接口、类、枚举、注解、方法
 @Documented
+@Component
+@Bean
 public @interface Beans {
 
     /** 依赖对象的名称，如果没有则以类名取代 */
+    @AliasFor(annotation = Component.class, attribute = "value")
     String value() default "";
+
+    /**
+     * 用法与 {@link Bean} 场景一致。
+     */
+    @AliasFor(annotation = Bean.class, attribute = "value")
+    String[] childBeanName() default {};
 
     /** 是否为单例，默认为单例 */
     boolean single() default true;

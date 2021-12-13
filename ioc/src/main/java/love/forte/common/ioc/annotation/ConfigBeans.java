@@ -13,6 +13,9 @@
 package love.forte.common.ioc.annotation;
 
 import love.forte.common.utils.annotation.AnnotateMapping;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.AliasFor;
+import org.springframework.stereotype.Component;
 
 import java.lang.annotation.*;
 
@@ -25,11 +28,13 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)    //注解会在class字节码文件中存在，在运行时可以通过反射获取到
 @Target({ElementType.TYPE, ElementType.METHOD}) //接口、类、枚举、注解、方法
 @Documented
+@Configuration
 @Beans(init = true)
 @AnnotateMapping(value = Beans.class)
 public @interface ConfigBeans {
 
     /** 依赖对象的名称，如果没有则以类名取代 */
+    @AliasFor(annotation = Configuration.class)
     String value() default "";
 
     /** 是否为单例，默认为单例 */

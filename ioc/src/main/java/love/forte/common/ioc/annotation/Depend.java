@@ -12,6 +12,9 @@
 
 package love.forte.common.ioc.annotation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.AliasFor;
+
 import java.lang.annotation.*;
 
 /**
@@ -24,6 +27,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)    //注解会在class字节码文件中存在，在运行时可以通过反射获取到
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.CONSTRUCTOR}) //接口、类、枚举、注解、方法
 @Documented
+@Autowired // required() always true
 public @interface Depend {
 
     /** 使用名称对依赖进行注入，如果为空字符串则使用类型进行注入 */
